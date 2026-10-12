@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality (composer audit, PHP CS Fixer, PHPStan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_pgsql
+          coverage: none
+          tools: composer:v2
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-publish
+
+      - name: Security audit of dependencies
+        run: composer audit
+
+      - name: Code style (PHP CS Fixer)
+        run: vendor/bin/php-cs-fixer check --diff --show-progress=none
+
+      - name: Static analysis (PHPStan)
+        run: |
+          php bin/console cache:warmup --env=dev
+          vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+      - name: Symfony lints
+        run: |
+          php bin/console lint:yaml config --parse-tags
+          php bin/console lint:twig templates
+          php bin/console lint:container
+          php bin/console doctrine:schema:validate --skip-sync
+
+  tests:
+    name: Tests (PHPUnit)
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: test
+    services:
+      # Same credentials as DATABASE_URL in .env; the test database is app_test.
+      database:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: '!ChangeMe!'
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_pgsql
+          coverage: none
+          tools: composer:v2
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Build Tailwind CSS
+        run: php bin/console tailwind:build
+
+      - name: Prepare test database
+        run: |
+          php bin/console doctrine:database:create --if-not-exists
+          php bin/console doctrine:migrations:migrate --no-interaction
+          php bin/console doctrine:fixtures:load --no-interaction
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit

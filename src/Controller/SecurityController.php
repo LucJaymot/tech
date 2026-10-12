@@ -60,7 +60,7 @@ final class SecurityController extends AbstractController
                 $loginLink = $loginLinkHandler->createLoginLink($user, $request);
 
                 $mailer->send((new TemplatedEmail())
-                    ->to(new Address($user->getEmail(), $user->getDisplayName() ?? ''))
+                    ->to(new Address($user->getEmail(), $user->getDisplayName()))
                     ->subject('Votre lien de connexion')
                     ->htmlTemplate('emails/login_link.html.twig')
                     ->textTemplate('emails/login_link.txt.twig')

@@ -22,12 +22,12 @@ class Collective
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 100)]
-    private ?string $name = null;
+    private string $name;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
     #[Assert\Regex('/^[a-z0-9]+(?:-[a-z0-9]+)*$/')]
-    private ?string $slug = null;
+    private string $slug;
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
@@ -38,8 +38,10 @@ class Collective
     #[ORM\OneToMany(targetEntity: Membership::class, mappedBy: 'collective', orphanRemoval: true)]
     private Collection $memberships;
 
-    public function __construct()
+    public function __construct(string $name, string $slug)
     {
+        $this->name = $name;
+        $this->slug = $slug;
         $this->createdAt = new \DateTimeImmutable();
         $this->memberships = new ArrayCollection();
     }
@@ -49,7 +51,7 @@ class Collective
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -61,7 +63,7 @@ class Collective
         return $this;
     }
 
-    public function getSlug(): ?string
+    public function getSlug(): string
     {
         return $this->slug;
     }

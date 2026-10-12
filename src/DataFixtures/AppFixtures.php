@@ -33,9 +33,7 @@ class AppFixtures extends Fixture
             'ines' => 'Inès Moreau',
             'hugo' => 'Hugo Petit',
         ] as $key => $displayName) {
-            $user = (new User())
-                ->setEmail($key.'@example.com')
-                ->setDisplayName($displayName);
+            $user = new User($key.'@example.com', $displayName);
             $user->setPassword($this->passwordHasher->hashPassword($user, self::PASSWORD));
             $manager->persist($user);
             $users[$key] = $user;
@@ -62,9 +60,7 @@ class AppFixtures extends Fixture
         ];
 
         foreach ($collectives as $slug => $data) {
-            $collective = (new Collective())
-                ->setName($data['name'])
-                ->setSlug($slug);
+            $collective = new Collective($data['name'], $slug);
             $manager->persist($collective);
 
             foreach ($data['members'] as $userKey => $role) {

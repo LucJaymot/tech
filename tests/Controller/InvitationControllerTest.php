@@ -7,6 +7,7 @@ use App\Repository\UserRepository;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Mime\Email;
 
 /**
  * Relies on AppFixtures: Camille is admin of "Jardin partagé des Lilas" (her
@@ -109,9 +110,9 @@ final class InvitationControllerTest extends WebTestCase
         // Camille is admin of the Jardin but only reader of the Atelier.
         $this->loginAs('camille@example.com');
         $crawler = $this->client->request('GET', '/collectif');
-        $form = $crawler->selectButton('Activer ce collectif')->form();
-        $form['collective']->select($this->connection()->fetchOne("SELECT id FROM collective WHERE slug = 'atelier-velo'"));
-        $this->client->submit($form);
+        $this->client->submit($crawler->selectButton('Activer ce collectif')->form(), [
+            'collective' => $this->collectiveId('atelier-velo'),
+        ]);
         $this->client->request('GET', '/collectif/inviter');
         self::assertResponseStatusCodeSame(403);
     }
@@ -177,16 +178,18 @@ final class InvitationControllerTest extends WebTestCase
         // Nora is admin of the Atelier: switch to it and invite someone there.
         $this->loginAs('nora@example.com');
         $crawler = $this->client->request('GET', '/collectif');
-        $form = $crawler->selectButton('Activer ce collectif')->form();
-        $form['collective']->select($this->connection()->fetchOne("SELECT id FROM collective WHERE slug = 'atelier-velo'"));
-        $this->client->submit($form);
+        $this->client->submit($crawler->selectButton('Activer ce collectif')->form(), [
+            'collective' => $this->collectiveId('atelier-velo'),
+        ]);
         $crawler = $this->client->request('GET', '/collectif/inviter');
         $this->client->submit($crawler->selectButton('Envoyer l\'invitation')->form(), ['invitation[email]' => 'paul@example.com']);
         $crawler = $this->client->followRedirect();
 
         self::assertSelectorTextContains('h1', 'Atelier vélo solidaire');
         self::assertSelectorTextContains('#invitations', 'paul@example.com');
-        self::assertStringNotContainsString('marie@example.com', $this->client->getResponse()->getContent());
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        self::assertStringNotContainsString('marie@example.com', $content);
 
         // A valid token does not let her cancel the Jardin's invitation.
         $token = $crawler->filter('#invitations input[name="_token"]')->attr('value');
@@ -210,9 +213,12 @@ final class InvitationControllerTest extends WebTestCase
 
         self::assertQueuedEmailCount(1);
         $message = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $message);
         self::assertEmailAddressContains($message, 'To', mb_strtolower($email));
         self::assertEmailTextBodyContains($message, 'Jardin partagé des Lilas');
-        self::assertSame(1, preg_match('#https?://\S+/invitation/[\w-]+#', $message->getTextBody(), $matches));
+        $body = $message->getTextBody();
+        self::assertIsString($body);
+        self::assertSame(1, preg_match('#https?://\S+/invitation/[\w-]+#', $body, $matches));
 
         return $matches[0];
     }
@@ -222,7 +228,17 @@ final class InvitationControllerTest extends WebTestCase
         // The previous request left the collective filter on; each request resets it.
         static::getContainer()->get(ActiveCollective::class)->reset();
         $this->client->getCookieJar()->clear();
-        $this->client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]));
+        $user = static::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]);
+        self::assertNotNull($user);
+        $this->client->loginUser($user);
+    }
+
+    private function collectiveId(string $slug): string
+    {
+        $id = $this->connection()->fetchOne('SELECT id FROM collective WHERE slug = ?', [$slug]);
+        self::assertIsInt($id);
+
+        return (string) $id;
     }
 
     private function connection(): Connection

@@ -146,6 +146,9 @@ final class CollectiveIsolationTest extends KernelTestCase
      */
     private function repository(string $class): object
     {
-        return static::getContainer()->get($class);
+        $service = static::getContainer()->get($class);
+        self::assertInstanceOf($class, $service);
+
+        return $service;
     }
 }

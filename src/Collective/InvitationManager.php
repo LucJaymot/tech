@@ -33,7 +33,7 @@ final class InvitationManager
         $user = $this->findUser($email);
 
         return null !== $user && $this->activeCollective->withoutFilter(
-            fn (): bool => $this->memberships->isMember($user, $collective->getId()),
+            fn (): bool => $this->memberships->isMember($user, $collective),
         );
     }
 
@@ -78,15 +78,13 @@ final class InvitationManager
 
         $user = $this->findUser($invitation->getEmail());
         if (null === $user) {
-            $user = (new User())
-                ->setEmail($invitation->getEmail())
-                ->setDisplayName(self::nameFromEmail($invitation->getEmail()));
+            $user = new User($invitation->getEmail(), self::nameFromEmail($invitation->getEmail()));
             $this->entityManager->persist($user);
         }
 
         $collective = $invitation->getCollective();
         $alreadyMember = null !== $user->getId() && $this->activeCollective->withoutFilter(
-            fn (): bool => $this->memberships->isMember($user, $collective->getId()),
+            fn (): bool => $this->memberships->isMember($user, $collective),
         );
         if (!$alreadyMember) {
             $this->entityManager->persist(new Membership($user, $collective, $invitation->getRole()));
@@ -112,6 +110,6 @@ final class InvitationManager
     {
         $local = strstr($email, '@', true) ?: $email;
 
-        return mb_convert_case(trim(preg_replace('/[._+-]+/', ' ', $local)), \MB_CASE_TITLE);
+        return mb_convert_case(trim(preg_replace('/[._+-]+/', ' ', $local) ?? $local), \MB_CASE_TITLE);
     }
 }

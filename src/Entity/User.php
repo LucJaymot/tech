@@ -20,7 +20,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
-    private ?string $email = null;
+    private string $email;
 
     /**
      * @var list<string> The user roles
@@ -35,7 +35,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 100)]
-    private ?string $displayName = null;
+    private string $displayName;
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
@@ -46,8 +46,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Membership::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $memberships;
 
-    public function __construct()
+    public function __construct(string $email, string $displayName)
     {
+        $this->email = $email;
+        $this->displayName = $displayName;
         $this->createdAt = new \DateTimeImmutable();
         $this->memberships = new ArrayCollection();
     }
@@ -57,7 +59,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
-    public function getEmail(): ?string
+    public function getEmail(): string
     {
         return $this->email;
     }
@@ -76,7 +78,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        if ('' === $this->email) {
+            throw new \LogicException('A user must have an e-mail address.');
+        }
+
+        return $this->email;
     }
 
     /**
@@ -116,7 +122,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getDisplayName(): ?string
+    public function getDisplayName(): string
     {
         return $this->displayName;
     }
@@ -147,7 +153,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __serialize(): array
     {
         $data = (array) $this;
-        $data["\0" . self::class . "\0password"] = null === $this->password ? null : hash('crc32c', $this->password);
+        $data["\0".self::class."\0password"] = null === $this->password ? null : hash('crc32c', $this->password);
 
         return $data;
     }

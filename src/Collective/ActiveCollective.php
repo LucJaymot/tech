@@ -5,7 +5,6 @@ namespace App\Collective;
 use App\Doctrine\CollectiveFilter;
 use App\Entity\Collective;
 use App\Entity\User;
-use App\Enum\MembershipRole;
 use App\Repository\MembershipRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
@@ -50,7 +49,7 @@ final class ActiveCollective implements ResetInterface
                     return $requested;
                 }
 
-                return $this->memberships->findCollectiveChoicesForUser($user)[0]['id'] ?? null;
+                return ($this->memberships->findCollectiveChoicesForUser($user)[0] ?? null)?->id;
             });
 
             if ($this->collectiveId !== $requested) {
@@ -75,16 +74,16 @@ final class ActiveCollective implements ResetInterface
     }
 
     /**
-     * Makes $collectiveId active if $user is a member of it.
+     * Makes $collective active if $user is a member of it.
      */
-    public function switchTo(User $user, int $collectiveId): bool
+    public function switchTo(User $user, Collective|int $collective): bool
     {
-        if (!$this->withoutFilter(fn (): bool => $this->memberships->isMember($user, $collectiveId))) {
+        if (!$this->withoutFilter(fn (): bool => $this->memberships->isMember($user, $collective))) {
             return false;
         }
 
-        $this->collectiveId = $collectiveId;
-        $this->requestStack->getSession()->set(self::SESSION_KEY, $collectiveId);
+        $this->collectiveId = $collective instanceof Collective ? $collective->getId() : $collective;
+        $this->requestStack->getSession()->set(self::SESSION_KEY, $this->collectiveId);
         $this->applyFilter();
 
         return true;
@@ -104,7 +103,7 @@ final class ActiveCollective implements ResetInterface
      * Every collective $user belongs to, as plain arrays so that nothing outside
      * the active collective enters the identity map.
      *
-     * @return list<array{id: int, name: string, slug: string, role: MembershipRole}>
+     * @return list<CollectiveChoice>
      */
     public function getChoices(User $user): array
     {

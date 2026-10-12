@@ -23,7 +23,7 @@ final class CollectiveControllerTest extends WebTestCase
         self::assertSelectorCount(4, 'main li');
         self::assertSelectorNotExists('form[action="/collectif/actif"]');
 
-        $html = $client->getResponse()->getContent();
+        $html = $this->html($client);
         self::assertStringNotContainsString('Atelier vélo', $html);
         self::assertStringNotContainsString('Hugo', $html);
         self::assertStringNotContainsString('hugo@example.com', $html);
@@ -35,16 +35,16 @@ final class CollectiveControllerTest extends WebTestCase
         $crawler = $client->request('GET', '/collectif');
         self::assertSelectorTextContains('h1', 'Jardin partagé des Lilas');
 
-        $form = $crawler->selectButton('Activer ce collectif')->form();
-        $form['collective']->select((string) $this->collectiveId('atelier-velo'));
-        $client->submit($form);
+        $client->submit($crawler->selectButton('Activer ce collectif')->form(), [
+            'collective' => (string) $this->collectiveId('atelier-velo'),
+        ]);
 
         self::assertResponseRedirects('/collectif');
         $client->followRedirect();
         self::assertSelectorTextContains('h1', 'Atelier vélo solidaire');
         self::assertSelectorTextContains('main', 'Hugo Petit');
         self::assertSelectorCount(3, 'main ul.divide-y > li');
-        self::assertStringNotContainsString('Théo', $client->getResponse()->getContent());
+        self::assertStringNotContainsString('Théo', $this->html($client));
     }
 
     public function testSwitchingToUnknownCollectiveIsForbidden(): void
@@ -71,9 +71,19 @@ final class CollectiveControllerTest extends WebTestCase
     private function loggedInClient(string $email): KernelBrowser
     {
         $client = static::createClient();
-        $client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]));
+        $user = static::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]);
+        self::assertNotNull($user);
+        $client->loginUser($user);
 
         return $client;
+    }
+
+    private function html(KernelBrowser $client): string
+    {
+        $content = $client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        return $content;
     }
 
     private function collectiveId(string $slug): int

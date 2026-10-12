@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Form\InvitationType;
 use App\Repository\InvitationRepository;
 use App\Security\Voter\CollectiveVoter;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Target;
@@ -65,14 +66,14 @@ final class InvitationController extends AbstractController
     #[Route('/collectif/invitations/{id}/annuler', name: 'app_invitation_cancel', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     #[IsCsrfTokenValid('cancel-invitation')]
-    public function cancel(int $id, InvitationRepository $invitations): Response
+    public function cancel(int $id, InvitationRepository $invitations, EntityManagerInterface $entityManager): Response
     {
         // Filtered: invitations of other collectives are not found.
         $invitation = $invitations->find($id) ?? throw $this->createNotFoundException();
         $this->denyAccessUnlessGranted(CollectiveVoter::MANAGE_MEMBERS, $invitation->getCollective());
 
-        $invitations->getEntityManager()->remove($invitation);
-        $invitations->getEntityManager()->flush();
+        $entityManager->remove($invitation);
+        $entityManager->flush();
         $this->addFlash('success', \sprintf('Invitation de %s annulée.', $invitation->getEmail()));
 
         return $this->redirectToRoute('app_collective');
@@ -101,7 +102,7 @@ final class InvitationController extends AbstractController
             if (null === $current) {
                 $security->login($user, 'login_link', 'main', [new RememberMeBadge()]);
             }
-            $this->activeCollective->switchTo($user, $invitation->getCollective()->getId());
+            $this->activeCollective->switchTo($user, $invitation->getCollective());
             $this->addFlash('success', \sprintf('Bienvenue dans %s !', $invitation->getCollective()->getName()));
 
             return $this->redirectToRoute('app_collective');

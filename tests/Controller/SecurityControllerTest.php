@@ -4,6 +4,8 @@ namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\BrowserKit\Cookie;
+use Symfony\Component\Mime\Email;
 
 /**
  * Relies on AppFixtures (camille@example.com exists).
@@ -29,20 +31,20 @@ final class SecurityControllerTest extends WebTestCase
         self::assertResponseRedirects('/connexion/envoye');
         self::assertQueuedEmailCount(1);
 
-        $email = self::getMailerMessage();
+        $email = $this->lastEmail();
         self::assertEmailAddressContains($email, 'To', 'camille@example.com');
         self::assertEmailHtmlBodyContains($email, 'Me connecter');
-        $link = $this->extractLink($email->getTextBody());
+        $link = $this->extractLink($email);
 
         // GET only shows a confirmation page, so prefetching scanners don't log in.
         $crawler = $client->request('GET', $link);
         self::assertResponseIsSuccessful();
-        self::assertNull($client->getCookieJar()->get('REMEMBERME'));
+        self::assertNull($this->rememberMeCookie($client));
 
         $client->submit($crawler->selectButton('Me connecter')->form());
         self::assertResponseRedirects('/collectif');
 
-        $rememberMe = $client->getCookieJar()->get('REMEMBERME');
+        $rememberMe = $this->rememberMeCookie($client);
         self::assertNotNull($rememberMe);
         self::assertGreaterThan(time() + 29 * 86400, (int) $rememberMe->getExpiresTime());
 
@@ -55,7 +57,7 @@ final class SecurityControllerTest extends WebTestCase
         $client = static::createClient();
         $client->disableReboot();
         $this->requestLink($client, 'camille@example.com');
-        $link = $this->extractLink(self::getMailerMessage()->getTextBody());
+        $link = $this->extractLink($this->lastEmail());
 
         $client->submit($client->request('GET', $link)->selectButton('Me connecter')->form());
         self::assertResponseRedirects('/collectif');
@@ -72,11 +74,12 @@ final class SecurityControllerTest extends WebTestCase
         $client = static::createClient();
         $client->disableReboot();
         $this->requestLink($client, 'camille@example.com');
-        $link = preg_replace('/hash=[^&]+/', 'hash=forged', $this->extractLink(self::getMailerMessage()->getTextBody()));
+        $link = preg_replace('/hash=[^&]+/', 'hash=forged', $this->extractLink($this->lastEmail()));
+        self::assertIsString($link);
 
         $client->submit($client->request('GET', $link)->selectButton('Me connecter')->form());
         self::assertResponseRedirects('/connexion');
-        self::assertNull($client->getCookieJar()->get('REMEMBERME'));
+        self::assertNull($this->rememberMeCookie($client));
     }
 
     public function testUnknownAddressGetsSameAnswerWithoutEmail(): void
@@ -127,10 +130,28 @@ final class SecurityControllerTest extends WebTestCase
         ]);
     }
 
-    private function extractLink(string $body): string
+    private function lastEmail(): Email
     {
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+
+        return $email;
+    }
+
+    private function extractLink(Email $email): string
+    {
+        $body = $email->getTextBody();
+        self::assertIsString($body);
         self::assertSame(1, preg_match('#https?://\S+/connexion/verification\?\S+#', $body, $matches));
 
         return $matches[0];
+    }
+
+    /**
+     * @phpstan-impure the cookie jar changes with each request
+     */
+    private function rememberMeCookie(KernelBrowser $client): ?Cookie
+    {
+        return $client->getCookieJar()->get('REMEMBERME');
     }
 }

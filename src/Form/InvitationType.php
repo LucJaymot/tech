@@ -9,6 +9,9 @@ use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * @extends AbstractType<array<string, mixed>>
+ */
 final class InvitationType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
