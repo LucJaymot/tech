@@ -67,33 +67,44 @@ final class InvitationManager
     }
 
     /**
-     * Adds the invitee to the collective, creating their account if needed.
-     * Following the e-mailed link proves they own the address.
+     * The account the invitation is for, created if needed.
+     * Following the e-mailed link proves the invitee owns the address.
      */
-    public function accept(Invitation $invitation): User
+    public function findOrCreateInvitee(Invitation $invitation): User
     {
-        if (!$invitation->isPending()) {
-            throw new \LogicException('This invitation is no longer pending.');
-        }
-
         $user = $this->findUser($invitation->getEmail());
         if (null === $user) {
             $user = new User($invitation->getEmail(), self::nameFromEmail($invitation->getEmail()));
             $this->entityManager->persist($user);
+            $this->entityManager->flush();
+        }
+
+        return $user;
+    }
+
+    /**
+     * Adds $invitee to the collective with the invited role. Call it once the
+     * invitee is logged in, so the activity log credits them.
+     */
+    public function accept(Invitation $invitation, User $invitee): void
+    {
+        if (!$invitation->isPending()) {
+            throw new \LogicException('This invitation is no longer pending.');
+        }
+        if ($invitee->getEmail() !== $invitation->getEmail()) {
+            throw new \LogicException('This invitation is for another address.');
         }
 
         $collective = $invitation->getCollective();
-        $alreadyMember = null !== $user->getId() && $this->activeCollective->withoutFilter(
-            fn (): bool => $this->memberships->isMember($user, $collective),
+        $alreadyMember = $this->activeCollective->withoutFilter(
+            fn (): bool => $this->memberships->isMember($invitee, $collective),
         );
         if (!$alreadyMember) {
-            $this->entityManager->persist(new Membership($user, $collective, $invitation->getRole()));
+            $this->entityManager->persist(new Membership($invitee, $collective, $invitation->getRole()));
         }
 
         $invitation->markAccepted();
         $this->entityManager->flush();
-
-        return $user;
     }
 
     private function findUser(string $email): ?User

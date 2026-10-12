@@ -67,7 +67,7 @@ final class InvitationControllerTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Jardin partagé des Lilas');
         self::assertSelectorTextContains('main', 'hugo@example.com');
         // Hugo now chooses between his two collectives.
-        self::assertSelectorCount(2, 'input[name="collective"]');
+        self::assertSelectorCount(2, 'header select[name="collective"] option');
         self::assertSame(1, (int) $this->connection()->fetchOne("SELECT COUNT(*) FROM \"user\" WHERE email = 'hugo@example.com'"));
     }
 
@@ -110,7 +110,7 @@ final class InvitationControllerTest extends WebTestCase
         // Camille is admin of the Jardin but only reader of the Atelier.
         $this->loginAs('camille@example.com');
         $crawler = $this->client->request('GET', '/collectif');
-        $this->client->submit($crawler->selectButton('Activer ce collectif')->form(), [
+        $this->client->submit($crawler->selectButton('Changer')->form(), [
             'collective' => $this->collectiveId('atelier-velo'),
         ]);
         $this->client->request('GET', '/collectif/inviter');
@@ -178,7 +178,7 @@ final class InvitationControllerTest extends WebTestCase
         // Nora is admin of the Atelier: switch to it and invite someone there.
         $this->loginAs('nora@example.com');
         $crawler = $this->client->request('GET', '/collectif');
-        $this->client->submit($crawler->selectButton('Activer ce collectif')->form(), [
+        $this->client->submit($crawler->selectButton('Changer')->form(), [
             'collective' => $this->collectiveId('atelier-velo'),
         ]);
         $crawler = $this->client->request('GET', '/collectif/inviter');

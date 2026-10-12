@@ -22,7 +22,12 @@
         {% endif %}
     </head>
     <body class="min-h-full bg-slate-950 text-slate-100 antialiased">
-        <main class="mx-auto w-full max-w-2xl px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6">
+        {% if is_granted('ROLE_USER') %}
+            <twig:CollectiveSwitcher />
+        {% endif %}
+
+        {# The header handles the top safe area when present. #}
+        <main class="mx-auto w-full max-w-2xl px-4 {{ is_granted('ROLE_USER') ? 'pt-6' : 'pt-[calc(1.5rem+env(safe-area-inset-top))]' }} pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6">
             {{ include('_partials/flashes.html.twig') }}
 
             {% block body %}{% endblock %}

@@ -49,25 +49,6 @@
                     </ul>
                 </twig:Card>
             {% endif %}
-
-            {% if choices|length > 1 %}
-                <twig:Card title="Changer de collectif">
-                    <form method="post" action="{{ path('app_collective_switch') }}" class="flex flex-col gap-4">
-                        <input type="hidden" name="_token" value="{{ csrf_token('switch-collective') }}">
-                        <fieldset class="flex flex-col gap-2">
-                            <legend class="sr-only">Collectif</legend>
-                            {% for choice in choices %}
-                                <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-slate-700 px-3 has-checked:border-indigo-500 has-checked:bg-indigo-950/40">
-                                    <input type="radio" name="collective" value="{{ choice.id }}" class="size-5 accent-indigo-500" {{ choice.id == collective.id ? 'checked' }}>
-                                    <span class="flex-1">{{ choice.name }}</span>
-                                    <span class="text-xs text-slate-400">{{ choice.role.label }}</span>
-                                </label>
-                            {% endfor %}
-                        </fieldset>
-                        <twig:Button type="submit" variant="secondary" block>Activer ce collectif</twig:Button>
-                    </form>
-                </twig:Card>
-            {% endif %}
         </div>
     {% endif %}
 

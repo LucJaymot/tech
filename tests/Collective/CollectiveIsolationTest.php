@@ -6,6 +6,7 @@ use App\Collective\ActiveCollective;
 use App\Entity\Collective;
 use App\Entity\Membership;
 use App\Entity\User;
+use App\Repository\ActivityRepository;
 use App\Repository\CollectiveRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
@@ -65,6 +66,29 @@ final class CollectiveIsolationTest extends KernelTestCase
             ->setParameter('slug', 'atelier-velo')
             ->getSingleScalarResult();
         self::assertSame(0, $leaked);
+    }
+
+    public function testActivityLogIsScopedToActiveCollective(): void
+    {
+        $connection = static::getContainer()->get(Connection::class);
+        foreach ([$this->collectiveA, $this->collectiveB] as $collective) {
+            $connection->insert('activity', [
+                'collective_id' => $collective,
+                'action' => 'created',
+                'subject_type' => 'Membership',
+                'subject_id' => 1,
+                'changed_fields' => '[]',
+                'occurred_at' => '2026-10-12 12:00:00',
+            ]);
+        }
+
+        $this->actAs('theo@example.com');
+
+        $activities = $this->repository(ActivityRepository::class)->findLatest();
+        self::assertNotEmpty($activities);
+        foreach ($activities as $activity) {
+            self::assertSame($this->collectiveA, $activity->getCollective()->getId());
+        }
     }
 
     public function testSessionPointingToAnotherCollectiveFallsBackToOwnCollective(): void

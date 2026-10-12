@@ -98,10 +98,11 @@ final class InvitationController extends AbstractController
                 throw $this->createAccessDeniedException();
             }
 
-            $user = $this->invitationManager->accept($invitation);
-            if (null === $current) {
+            $user = $current instanceof User ? $current : $this->invitationManager->findOrCreateInvitee($invitation);
+            if (!$current instanceof User) {
                 $security->login($user, 'login_link', 'main', [new RememberMeBadge()]);
             }
+            $this->invitationManager->accept($invitation, $user);
             $this->activeCollective->switchTo($user, $invitation->getCollective());
             $this->addFlash('success', \sprintf('Bienvenue dans %s !', $invitation->getCollective()->getName()));
 

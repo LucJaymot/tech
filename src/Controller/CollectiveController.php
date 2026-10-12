@@ -24,7 +24,7 @@ final class CollectiveController extends AbstractController
     }
 
     #[Route('/collectif', name: 'app_collective', methods: ['GET'])]
-    public function show(#[CurrentUser] User $user, MembershipRepository $memberships, InvitationRepository $invitations): Response
+    public function show(MembershipRepository $memberships, InvitationRepository $invitations): Response
     {
         $collective = $this->activeCollective->get();
         $canManage = null !== $collective && $this->isGranted(CollectiveVoter::MANAGE_MEMBERS, $collective);
@@ -32,7 +32,6 @@ final class CollectiveController extends AbstractController
         return $this->render('collective/show.html.twig', [
             'collective' => $collective,
             'memberships' => $memberships->findForActiveCollective(),
-            'choices' => $this->activeCollective->getChoices($user),
             'can_manage' => $canManage,
             'invitations' => $canManage ? $invitations->findPending() : [],
         ]);
@@ -47,6 +46,12 @@ final class CollectiveController extends AbstractController
         }
 
         $this->addFlash('success', \sprintf('Collectif actif : %s.', $this->activeCollective->get()?->getName()));
+
+        // Back to the page the selector was on; only local paths are accepted.
+        $target = $request->request->getString('_target_path');
+        if (str_starts_with($target, '/') && !str_starts_with($target, '//') && !str_contains($target, '\\')) {
+            return $this->redirect($target);
+        }
 
         return $this->redirectToRoute('app_collective');
     }
