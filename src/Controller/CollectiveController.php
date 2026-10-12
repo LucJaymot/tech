@@ -6,6 +6,7 @@ use App\Collective\ActiveCollective;
 use App\Entity\User;
 use App\Repository\InvitationRepository;
 use App\Repository\MembershipRepository;
+use App\Repository\SoireeRepository;
 use App\Security\Voter\CollectiveVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,7 +25,7 @@ final class CollectiveController extends AbstractController
     }
 
     #[Route('/collectif', name: 'app_collective', methods: ['GET'])]
-    public function show(MembershipRepository $memberships, InvitationRepository $invitations): Response
+    public function show(MembershipRepository $memberships, InvitationRepository $invitations, SoireeRepository $soirees): Response
     {
         $collective = $this->activeCollective->get();
         $canManage = null !== $collective && $this->isGranted(CollectiveVoter::MANAGE_MEMBERS, $collective);
@@ -34,6 +35,8 @@ final class CollectiveController extends AbstractController
             'memberships' => $memberships->findForActiveCollective(),
             'can_manage' => $canManage,
             'invitations' => $canManage ? $invitations->findPending() : [],
+            'soirees' => $soirees->findBy([], ['date' => 'ASC']),
+            'can_view_budget' => null !== $collective && $this->isGranted(CollectiveVoter::VIEW_BUDGET, $collective),
         ]);
     }
 

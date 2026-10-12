@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Budget · {{ soiree.nom }}{% endblock %}
+
+{% block body %}
+    <p class="text-sm text-slate-400">Budget · {{ soiree.date|date('d/m/Y') }}</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+
+    <twig:Budget :soiree="soiree" class="mt-6" />
+{% endblock %}

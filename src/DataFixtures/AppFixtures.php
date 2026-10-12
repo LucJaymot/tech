@@ -14,6 +14,7 @@ use App\Entity\Passage;
 use App\Entity\Poste;
 use App\Entity\Soiree;
 use App\Entity\User;
+use App\Enum\CategorieBudget;
 use App\Enum\LigneBudgetType;
 use App\Enum\MembershipRole;
 use App\Enum\ModeRemuneration;
@@ -100,10 +101,10 @@ class AppFixtures extends Fixture
             ->setArtistesPayes(true);
         new Poste($soiree, 'Accueil', new \DateTimeImmutable('18:30'), new \DateTimeImmutable('22:00'), 2);
         new Poste($soiree, 'Buvette', new \DateTimeImmutable('19:00'), new \DateTimeImmutable('01:00'), 3);
-        new LigneBudget($soiree, 'Cachets des artistes', LigneBudgetType::Depense, 60000);
-        new LigneBudget($soiree, 'Achats buvette', LigneBudgetType::Depense, 25000);
-        new LigneBudget($soiree, 'Entrées', LigneBudgetType::Recette, 80000);
-        new LigneBudget($soiree, 'Ventes buvette', LigneBudgetType::Recette, 45000);
+        new LigneBudget($soiree, LigneBudgetType::Depense, CategorieBudget::Technique, 'Location sono', 15000);
+        new LigneBudget($soiree, LigneBudgetType::Depense, CategorieBudget::Buvette, 'Achats buvette', 25000);
+        new LigneBudget($soiree, LigneBudgetType::Recette, CategorieBudget::Billetterie, 'Entrées', 80000);
+        new LigneBudget($soiree, LigneBudgetType::Recette, CategorieBudget::Buvette, 'Ventes buvette', 45000);
         $manager->persist($soiree);
 
         $this->loadProgramme($manager, $soiree);
@@ -120,16 +121,21 @@ class AppFixtures extends Fixture
         $concert = new Passage($soiree, $jour->setTime(20, 0), $jour->setTime(21, 0));
         $b2b = new Passage($soiree, $jour->setTime(23, 0), $jour->modify('+1 day')->setTime(1, 0));
 
-        (new Booking($soiree, $lila, 60000, ModeRemuneration::Cession))
+        // Statuses set directly: the workflow guards need a logged-in admin.
+        // Confirmed bookings get their fee line from CachetsBudgetListener.
+        $lilaBooking = (new Booking($soiree, $lila, 60000, ModeRemuneration::Cession))
             ->setPassage($concert)
             ->setRider(new Rider(30, 20, ['Piano numérique', '2 micros chant'], ['Guitare'], 'Retour de scène côté jardin.'))
             ->setHospitalite(new Hospitalite(2, ['végétarien'], 4));
-        (new Booking($soiree, $kumo, 25000, ModeRemuneration::Guso))
+        $kumoBooking = (new Booking($soiree, $kumo, 25000, ModeRemuneration::Guso))
             ->setPassage($b2b)
             ->setRider(new Rider(15, 0, ['2 platines CDJ', 'Table de mixage'], ['Clé USB']))
             ->setHospitalite(new Hospitalite(1, [], 2, true));
         (new Booking($soiree, $nadia, 25000, ModeRemuneration::Guso))
             ->setPassage($b2b)
             ->setHospitalite(new Hospitalite(1, ['sans gluten'], 2));
+
+        $lilaBooking->setStatut('confirme');
+        $kumoBooking->setStatut('declare_guso');
     }
 }

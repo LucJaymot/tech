@@ -1,0 +1,10 @@
+parameters:
+    # Rates used to estimate charges in soirée budgets. Never hard-code a rate:
+    # change them here. Their results are always shown as estimates.
+    #   points_de_base: the rate in basis points (1/100 of a percent): 350 = 3,5 %
+    #   assiette: the budget category the rate applies to (App\Enum\CategorieBudget)
+    app.budget.taux_estimes:
+        -   code: taxe_spectacles
+            libelle: 'Taxe sur les spectacles'
+            points_de_base: 350
+            assiette: billetterie

@@ -11,8 +11,9 @@ use Doctrine\ORM\EntityManagerInterface;
  * Creates a new soirée from an existing one.
  *
  * Copies the lieu, opening hours, jauge, buvette, artistes payés, postes and
- * forecast budget. Never copies dates (the new one is given), assignments or
- * check-ins of the postes, nor attachments. The copy starts in preparation.
+ * forecast budget (without fee lines, which follow the bookings). Never copies
+ * dates (the new one is given), actual amounts, assignments or check-ins of
+ * the postes, nor attachments. The copy starts in preparation.
  */
 final class SoireeDuplicator
 {
@@ -33,8 +34,11 @@ final class SoireeDuplicator
         foreach ($source->getPostes() as $poste) {
             new Poste($copy, $poste->getIntitule(), $poste->getDebut(), $poste->getFin(), $poste->getNombrePersonnes());
         }
+        // Forecast amounts only; fee lines follow bookings, which are not copied.
         foreach ($source->getLignesBudget() as $ligne) {
-            new LigneBudget($copy, $ligne->getLibelle(), $ligne->getType(), $ligne->getMontantPrevu());
+            if (!$ligne->estGeneree()) {
+                new LigneBudget($copy, $ligne->getType(), $ligne->getCategorie(), $ligne->getLibelle(), $ligne->getMontantPrevu());
+            }
         }
 
         $this->entityManager->persist($copy);

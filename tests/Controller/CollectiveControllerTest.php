@@ -20,7 +20,7 @@ final class CollectiveControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Jardin partagé des Lilas');
         self::assertSelectorTextContains('main', 'Inès Moreau');
-        self::assertSelectorCount(4, 'main li');
+        self::assertSelectorCount(4, '#membres > li');
         self::assertSelectorNotExists('form[action="/collectif/actif"]');
 
         $html = $this->html($client);
@@ -43,7 +43,7 @@ final class CollectiveControllerTest extends WebTestCase
         $client->followRedirect();
         self::assertSelectorTextContains('h1', 'Atelier vélo solidaire');
         self::assertSelectorTextContains('main', 'Hugo Petit');
-        self::assertSelectorCount(3, 'main ul.divide-y > li');
+        self::assertSelectorCount(3, '#membres > li');
         self::assertStringNotContainsString('Théo', $this->html($client));
     }
 

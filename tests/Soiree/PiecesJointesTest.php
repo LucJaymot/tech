@@ -5,8 +5,8 @@ namespace App\Tests\Soiree;
 use App\Entity\Soiree;
 use App\Repository\PieceJointeRepository;
 use App\Repository\SoireeRepository;
-use App\Soiree\PieceJointeRefusee;
 use App\Soiree\PiecesJointes;
+use App\Storage\FichierRefuse;
 use App\Tests\Support\ActsAsMember;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -69,7 +69,7 @@ final class PiecesJointesTest extends KernelTestCase
     {
         $this->actAs('camille@example.com');
 
-        $this->expectException(PieceJointeRefusee::class);
+        $this->expectException(FichierRefuse::class);
         $this->piecesJointes()->ajouter($this->soiree(), $this->upload("#!/bin/sh\necho hello\n", 'script.pdf'), null);
     }
 
@@ -81,7 +81,7 @@ final class PiecesJointesTest extends KernelTestCase
         try {
             $this->piecesJointes()->ajouter($this->soiree(), $this->upload($content, 'gros.pdf'), null);
             self::fail('A file over 10 MB must be refused.');
-        } catch (PieceJointeRefusee $e) {
+        } catch (FichierRefuse $e) {
             self::assertStringContainsString('volumineux', $e->getMessage());
         }
         self::assertSame([], iterator_to_array($this->storage()->listContents('/', true)));

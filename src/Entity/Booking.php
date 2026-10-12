@@ -69,6 +69,10 @@ class Booking implements CollectiveScopedInterface
     #[Assert\Valid]
     private Hospitalite $hospitalite;
 
+    /** The fee line generated once the booking is confirmed. */
+    #[ORM\OneToOne(mappedBy: 'booking')]
+    private ?LigneBudget $ligneBudget = null;
+
     /** @var Collection<int, BookingTransition> */
     #[ORM\OneToMany(targetEntity: BookingTransition::class, mappedBy: 'booking', cascade: ['persist'])]
     #[ORM\OrderBy(['effectueeLe' => 'ASC', 'id' => 'ASC'])]
@@ -207,6 +211,27 @@ class Booking implements CollectiveScopedInterface
         $this->hospitalite = $hospitalite;
 
         return $this;
+    }
+
+    public function getLigneBudget(): ?LigneBudget
+    {
+        return $this->ligneBudget;
+    }
+
+    /**
+     * @internal for LigneBudget::pourCachet() and App\EventListener\CachetsBudgetListener
+     */
+    public function setLigneBudget(?LigneBudget $ligneBudget): void
+    {
+        $this->ligneBudget = $ligneBudget;
+    }
+
+    /**
+     * Confirmed or further: its fee belongs in the budget.
+     */
+    public function estConfirme(): bool
+    {
+        return \in_array($this->getStatutEnum(), [BookingStatut::Confirme, BookingStatut::ContratSigne, BookingStatut::DeclareGuso, BookingStatut::Paye], true);
     }
 
     /**

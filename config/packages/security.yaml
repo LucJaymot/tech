@@ -53,8 +53,9 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # Checked before the controller: anonymous visitors are sent to the login
+        # page instead of getting a 404 from the collective filter.
+        - { path: ^/(soirees|budget)/, roles: ROLE_USER }
 
 when@test:
     security:

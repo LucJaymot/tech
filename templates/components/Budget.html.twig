@@ -1,0 +1,142 @@
+<div {{ attributes.defaults({class: 'flex flex-col gap-6'}) }}>
+    {# Inside <twig:Card>, "this" is the card: read the component once, here. #}
+    {% set totaux = this.totaux %}
+    {% set modifiable = this.peutModifier %}
+    {% set categories = this.categories %}
+    {% set erreurs = this.erreurs %}
+
+    <twig:Card title="Totaux" description="Recalculés à chaque modification." id="totaux">
+        <dl class="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-2 text-sm tabular-nums">
+            <dt></dt><dd class="text-right text-slate-400">Prévu</dd><dd class="text-right text-slate-400">Réel</dd>
+            <dt>Dépenses</dt><dd class="text-right" id="depenses-prevues">{{ totaux.depensesPrevues|euros }}</dd><dd class="text-right" id="depenses-reelles">{{ totaux.depensesReelles|euros }}</dd>
+            <dt>Recettes</dt><dd class="text-right" id="recettes-prevues">{{ totaux.recettesPrevues|euros }}</dd><dd class="text-right" id="recettes-reelles">{{ totaux.recettesReelles|euros }}</dd>
+            <dt class="font-semibold">Solde</dt>
+            <dd class="text-right font-semibold {{ totaux.soldePrevu < 0 ? 'text-red-400' : 'text-emerald-400' }}" id="solde-prevu">{{ totaux.soldePrevu|euros }}</dd>
+            <dd class="text-right font-semibold {{ totaux.soldeReel < 0 ? 'text-red-400' : 'text-emerald-400' }}" id="solde-reel">{{ totaux.soldeReel|euros }}</dd>
+            <dt class="col-span-2 text-slate-400">Écart des dépenses connues</dt><dd class="text-right text-slate-400" id="ecart-depenses">{{ totaux.ecartDepenses|euros }}</dd>
+            <dt class="col-span-2 text-slate-400">Écart des recettes connues</dt><dd class="text-right text-slate-400" id="ecart-recettes">{{ totaux.ecartRecettes|euros }}</dd>
+        </dl>
+        {% if totaux.lignesSansReel > 0 %}
+            <p class="mt-3 text-xs text-slate-400">{{ totaux.lignesSansReel }} ligne{{ totaux.lignesSansReel > 1 ? 's' }} sans montant réel : le réel est encore incomplet.</p>
+        {% endif %}
+    </twig:Card>
+
+    <twig:Card title="Estimations" description="Calculées avec les taux configurés : ce sont des estimations, pas des montants dus." id="estimations">
+        <ul class="flex flex-col gap-2 text-sm">
+            {% for estimation in totaux.estimations %}
+                <li class="flex flex-wrap items-baseline justify-between gap-2">
+                    <span>{{ estimation.taux.libelle }} ({{ estimation.taux.pourcentage }}, sur {{ estimation.taux.assiette.label|lower }}) <twig:Badge status="warning" :dot="false">estimation</twig:Badge></span>
+                    <span class="tabular-nums">{{ estimation.prevu|euros }} prévu · {{ estimation.reel|euros }} réel</span>
+                </li>
+            {% endfor %}
+            <li class="mt-2 border-t border-slate-800 pt-3" id="seuil">
+                <p>Seuil de rentabilité <twig:Badge status="warning" :dot="false">estimation</twig:Badge></p>
+                <p class="mt-1 text-slate-300">
+                    {% if totaux.seuilBilletterie == 0 %}
+                        Les autres recettes couvrent déjà les dépenses.
+                    {% else %}
+                        <strong class="text-slate-100">{{ totaux.seuilBilletterie|euros }}</strong> de billetterie
+                        {%- if totaux.seuilEntrees is not null %}, soit <strong class="text-slate-100">{{ totaux.seuilEntrees }} entrées</strong>{% endif %}.
+                    {% endif %}
+                </p>
+                <label class="mt-3 flex items-center gap-2 text-sm text-slate-400">
+                    Prix moyen d'une entrée
+                    <input type="text" inputmode="decimal" data-model="prixEntree" value="{{ prixEntree }}" placeholder="12,00" class="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-base text-slate-100">
+                    €
+                </label>
+            </li>
+        </ul>
+    </twig:Card>
+
+    {% for type in ['depense', 'recette'] %}
+        <section class="flex flex-col gap-3">
+            <h2 class="text-base font-semibold">{{ type == 'depense' ? 'Dépenses' : 'Recettes' }}</h2>
+            {% for ligne in this.lignes|filter(l => l.type.value == type) %}
+                {% set id = ligne.id %}
+                <article id="ligne-{{ id }}" class="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="truncate font-medium">{{ ligne.libelle }}</p>
+                            <p class="text-xs text-slate-400">{{ ligne.categorie.label }}</p>
+                        </div>
+                        {% if ligne.estGeneree %}
+                            <twig:Badge status="info" :dot="false">depuis le booking</twig:Badge>
+                        {% elseif modifiable %}
+                            <twig:Button variant="ghost" size="sm" data-action="live#action" data-live-action-param="supprimer" data-live-ligne-param="{{ id }}" aria-label="Supprimer {{ ligne.libelle }}">Supprimer</twig:Button>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-3 grid grid-cols-2 gap-3">
+                        {% for champ in ['prevu', 'reel'] %}
+                            {% set erreur = erreurs[id ~ '.' ~ champ] ?? null %}
+                            <label class="flex flex-col gap-1 text-xs text-slate-400">
+                                {{ champ == 'prevu' ? 'Prévu' : 'Réel' }}
+                                {% if ligne.estGeneree or not modifiable %}
+                                    {% set montant = champ == 'prevu' ? ligne.montantPrevu : ligne.montantReel %}
+                                    <span class="py-2 text-base tabular-nums text-slate-100">{{ montant is null ? '—' : montant|euros }}</span>
+                                {% else %}
+                                    <input type="text" inputmode="decimal" name="montants[{{ id }}][{{ champ }}]"
+                                           data-model="on(change)|montants.{{ id }}.{{ champ }}"
+                                           value="{{ this.montants[id][champ] ?? '' }}"
+                                           placeholder="{{ champ == 'reel' ? 'inconnu' : '0,00' }}"
+                                           aria-invalid="{{ erreur ? 'true' : 'false' }}"
+                                           class="rounded-lg border bg-slate-950 px-3 py-2 text-base tabular-nums text-slate-100 {{ erreur ? 'border-red-500' : 'border-slate-700' }}">
+                                    {% if erreur %}<span class="text-red-400">{{ erreur }}</span>{% endif %}
+                                {% endif %}
+                            </label>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-3 border-t border-slate-800 pt-3 text-sm" data-live-ignore>
+                        {% for justificatif in ligne.justificatifs %}
+                            <a href="{{ path('app_budget_justificatif', {id: justificatif.id}) }}" data-turbo="false" class="mr-3 inline-block text-indigo-400 underline">{{ justificatif.nomOriginal }}</a>
+                        {% endfor %}
+                        {% if modifiable %}
+                            <form method="post" enctype="multipart/form-data" action="{{ path('app_budget_justificatif_ajouter', {id: id}) }}" class="mt-2 flex flex-wrap items-center gap-2">
+                                <input type="hidden" name="_token" value="{{ csrf_token('justificatif') }}">
+                                <label class="sr-only" for="justificatif-{{ id }}">Justificatif pour {{ ligne.libelle }}</label>
+                                <input id="justificatif-{{ id }}" type="file" name="fichier" accept="application/pdf,image/*" class="min-w-0 flex-1 text-xs text-slate-400">
+                                <twig:Button type="submit" variant="secondary" size="sm">Joindre</twig:Button>
+                            </form>
+                        {% elseif ligne.justificatifs is empty %}
+                            <span class="text-slate-500">Aucun justificatif</span>
+                        {% endif %}
+                    </div>
+                </article>
+            {% else %}
+                <p class="text-sm text-slate-400">Aucune ligne.</p>
+            {% endfor %}
+        </section>
+    {% endfor %}
+
+    {% if modifiable %}
+        <twig:Card title="Ajouter une ligne">
+            <div class="flex flex-col gap-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex flex-col gap-1 text-sm">Type
+                        <select data-model="nouveauType" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base">
+                            <option value="depense" {{ nouveauType == 'depense' ? 'selected' }}>Dépense</option>
+                            <option value="recette" {{ nouveauType == 'recette' ? 'selected' }}>Recette</option>
+                        </select>
+                    </label>
+                    <label class="flex flex-col gap-1 text-sm">Catégorie
+                        <select data-model="nouvelleCategorie" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base">
+                            {% for categorie in categories|filter(c => c.value != 'cachets') %}
+                                <option value="{{ categorie.value }}" {{ nouvelleCategorie == categorie.value ? 'selected' }}>{{ categorie.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <label class="flex flex-col gap-1 text-sm">Libellé
+                    <input type="text" data-model="nouveauLibelle" value="{{ nouveauLibelle }}" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base">
+                </label>
+                <label class="flex flex-col gap-1 text-sm">Montant prévu
+                    <input type="text" inputmode="decimal" data-model="nouveauPrevu" value="{{ nouveauPrevu }}" placeholder="0,00" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base">
+                </label>
+                {% if erreurs.nouveau is defined %}<p class="text-sm text-red-400">{{ erreurs.nouveau }}</p>{% endif %}
+                <twig:Button data-action="live#action" data-live-action-param="ajouter" block>Ajouter</twig:Button>
+                <p class="text-xs text-slate-500">Les cachets s'ajoutent tout seuls quand un booking est confirmé.</p>
+            </div>
+        </twig:Card>
+    {% endif %}
+</div>

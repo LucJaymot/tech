@@ -48,7 +48,7 @@ final class InvitationControllerTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Jardin partagé des Lilas');
         self::assertSelectorTextContains('main', 'Bienvenue dans Jardin partagé des Lilas');
         self::assertSelectorTextContains('main', 'Marie Durand');
-        self::assertSelectorCount(5, 'main ul.divide-y > li');
+        self::assertSelectorCount(5, '#membres > li');
         self::assertSelectorNotExists('a[href="/collectif/inviter"]');
 
         $this->client->request('GET', $link);

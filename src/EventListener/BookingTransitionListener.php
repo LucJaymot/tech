@@ -34,13 +34,26 @@ final class BookingTransitionListener
             return;
         }
 
-        $user = $this->security->getUser();
         $this->entityManager->persist(new BookingTransition(
             $booking,
             $transition->getName(),
             $transition->getFroms()[0],
             $transition->getTos()[0],
-            $user instanceof User ? $user : null,
+            $this->auteur(),
         ));
+    }
+
+    /**
+     * The logged-in user, as an entity this manager tracks: the security
+     * token may hold an instance loaded before the manager was cleared.
+     */
+    private function auteur(): ?User
+    {
+        $user = $this->security->getUser();
+        if (!$user instanceof User || null === $user->getId()) {
+            return null;
+        }
+
+        return $this->entityManager->contains($user) ? $user : $this->entityManager->getReference(User::class, $user->getId());
     }
 }

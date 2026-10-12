@@ -2,17 +2,21 @@
 
 namespace App\Tests\Booking;
 
+use App\Entity\Artiste;
 use App\Entity\Booking;
 use App\Entity\BookingTransition;
+use App\Entity\Soiree;
+use App\Enum\ModeRemuneration;
 use App\Repository\BookingRepository;
+use App\Repository\SoireeRepository;
 use App\Tests\Support\ActsAsMember;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Workflow\WorkflowInterface;
 
 /**
- * Relies on AppFixtures: Lila Moon (cession) and DJ Kumo (GUSO) on "Concert de
- * printemps" of the Jardin, where Camille is admin, Théo member, Inès reader.
+ * Works on bookings created by each test on "Concert de printemps" of the
+ * Jardin (AppFixtures), where Camille is admin, Théo member, Inès reader.
  */
 final class BookingWorkflowTest extends KernelTestCase
 {
@@ -26,7 +30,7 @@ final class BookingWorkflowTest extends KernelTestCase
     public function testGusoBookingMustBeDeclaredBeforePayment(): void
     {
         $this->actAs('camille@example.com');
-        $kumo = $this->booking('DJ Kumo');
+        $kumo = $this->nouveauBooking(ModeRemuneration::Guso);
 
         $this->applyAll($kumo, ['negocier', 'confirmer', 'signer_contrat']);
         self::assertSame(['declarer_guso'], $this->enabled($kumo));
@@ -38,7 +42,7 @@ final class BookingWorkflowTest extends KernelTestCase
     public function testCessionBookingIsPaidWithoutGusoDeclaration(): void
     {
         $this->actAs('camille@example.com');
-        $lila = $this->booking('Lila Moon');
+        $lila = $this->nouveauBooking(ModeRemuneration::Cession);
 
         $this->applyAll($lila, ['negocier', 'confirmer', 'signer_contrat']);
         self::assertSame(['payer'], $this->enabled($lila));
@@ -51,33 +55,36 @@ final class BookingWorkflowTest extends KernelTestCase
     public function testMemberNegotiatesButOnlyAdminsHandlePayment(): void
     {
         $this->actAs('theo@example.com');
-        $kumo = $this->booking('DJ Kumo');
+        $kumo = $this->nouveauBooking(ModeRemuneration::Guso);
         $this->applyAll($kumo, ['negocier', 'confirmer', 'signer_contrat']);
 
         self::assertSame([], $this->enabled($kumo));
 
         $this->actAs('camille@example.com');
-        self::assertSame(['declarer_guso'], $this->enabled($this->booking('DJ Kumo')));
+        self::assertSame(['declarer_guso'], $this->enabled($this->recharger($kumo)));
     }
 
     public function testReaderChangesNothing(): void
     {
-        $this->actAs('ines@example.com');
+        $this->actAs('camille@example.com');
+        $booking = $this->nouveauBooking(ModeRemuneration::Paie);
 
-        self::assertSame([], $this->enabled($this->booking('Lila Moon')));
+        $this->actAs('ines@example.com');
+        self::assertSame([], $this->enabled($this->recharger($booking)));
     }
 
     public function testHistoryKeepsEveryTransitionWithItsAuthor(): void
     {
         $this->actAs('theo@example.com');
-        $this->applyAll($this->booking('DJ Kumo'), ['negocier', 'confirmer', 'signer_contrat']);
+        $kumo = $this->nouveauBooking(ModeRemuneration::Guso);
+        $this->applyAll($kumo, ['negocier', 'confirmer', 'signer_contrat']);
         $this->actAs('camille@example.com');
-        $this->applyAll($this->booking('DJ Kumo'), ['declarer_guso', 'payer']);
+        $this->applyAll($kumo = $this->recharger($kumo), ['declarer_guso', 'payer']);
         $this->em()->clear();
 
         $history = array_map(
             static fn (BookingTransition $t): string => \sprintf('%s: %s → %s by %s', $t->getTransition(), $t->getDepuis(), $t->getVers(), $t->getEffectueePar()?->getEmail()),
-            $this->booking('DJ Kumo')->getTransitions()->toArray(),
+            $this->recharger($kumo)->getTransitions()->toArray(),
         );
 
         self::assertSame([
@@ -108,14 +115,26 @@ final class BookingWorkflowTest extends KernelTestCase
         return array_values(array_map(static fn ($t): string => $t->getName(), $this->workflow()->getEnabledTransitions($booking)));
     }
 
-    private function booking(string $artiste): Booking
+    private function nouveauBooking(ModeRemuneration $mode): Booking
     {
-        foreach (static::getContainer()->get(BookingRepository::class)->findAll() as $booking) {
-            if ($artiste === $booking->getArtiste()->getNom()) {
-                return $booking;
-            }
-        }
-        self::fail(\sprintf('%s is booked in the fixtures.', $artiste));
+        $soiree = static::getContainer()->get(SoireeRepository::class)->findOneBy(['nom' => 'Concert de printemps']);
+        self::assertInstanceOf(Soiree::class, $soiree);
+        $artiste = new Artiste($soiree->getCollective(), 'Artiste '.$mode->value);
+        $booking = new Booking($soiree, $artiste, 30_000, $mode);
+        $this->em()->persist($artiste);
+        $this->em()->persist($booking);
+        $this->em()->flush();
+
+        return $booking;
+    }
+
+    private function recharger(Booking $booking): Booking
+    {
+        $this->em()->clear();
+        $recharge = static::getContainer()->get(BookingRepository::class)->find((int) $booking->getId());
+        self::assertInstanceOf(Booking::class, $recharge);
+
+        return $recharge;
     }
 
     private function workflow(): WorkflowInterface

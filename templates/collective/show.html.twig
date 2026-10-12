@@ -11,7 +11,7 @@
 
         <div class="mt-8 flex flex-col gap-6">
             <twig:Card title="Membres" description="{{ memberships|length }} membre{{ memberships|length > 1 ? 's' }}">
-                <ul class="-my-2 divide-y divide-slate-800">
+                <ul class="-my-2 divide-y divide-slate-800" id="membres">
                     {% for membership in memberships %}
                         <li class="flex items-center justify-between gap-3 py-3">
                             <div class="min-w-0">
@@ -30,6 +30,24 @@
                     {% endif %}
                 </twig:block>
             </twig:Card>
+
+            {% if soirees is not empty %}
+                <twig:Card title="Soirées">
+                    <ul class="-my-2 divide-y divide-slate-800" id="soirees">
+                        {% for soiree in soirees %}
+                            <li class="flex items-center justify-between gap-3 py-3">
+                                <div class="min-w-0">
+                                    <p class="truncate font-medium">{{ soiree.nom }}</p>
+                                    <p class="text-sm text-slate-400">{{ soiree.date|date('d/m/Y') }} · {{ soiree.statutEnum.label }}</p>
+                                </div>
+                                {% if can_view_budget %}
+                                    <twig:Button href="{{ path('app_budget', {id: soiree.id}) }}" variant="secondary" size="sm">Budget</twig:Button>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </twig:Card>
+            {% endif %}
 
             {% if can_manage and invitations is not empty %}
                 <twig:Card title="Invitations en attente">

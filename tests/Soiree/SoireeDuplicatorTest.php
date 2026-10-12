@@ -59,7 +59,13 @@ final class SoireeDuplicatorTest extends KernelTestCase
             self::assertSame($copy, $poste->getSoiree());
             self::assertNotNull($poste->getId());
         }
-        self::assertSame($this->budget($source), $this->budget($copy));
+        // Hand-typed lines are copied, forecast only; fee lines follow bookings, which are not copied.
+        self::assertSame($this->budget($source, saufCachets: true), $this->budget($copy));
+        self::assertCount(4, $copy->getLignesBudget());
+        foreach ($copy->getLignesBudget() as $ligne) {
+            self::assertFalse($ligne->estGeneree());
+            self::assertNull($ligne->getMontantReel());
+        }
         self::assertCount(2, $source->getPostes(), 'The source keeps its own postes.');
     }
 
@@ -104,11 +110,11 @@ final class SoireeDuplicatorTest extends KernelTestCase
     /**
      * @return list<string>
      */
-    private function budget(Soiree $soiree): array
+    private function budget(Soiree $soiree, bool $saufCachets = false): array
     {
-        return array_map(
-            static fn (LigneBudget $l): string => \sprintf('%s %s %d', $l->getType()->value, $l->getLibelle(), $l->getMontantPrevu()),
-            array_values($soiree->getLignesBudget()->toArray()),
-        );
+        return array_values(array_map(
+            static fn (LigneBudget $l): string => \sprintf('%s %s %s %d', $l->getType()->value, $l->getCategorie()->value, $l->getLibelle(), $l->getMontantPrevu()),
+            array_filter($soiree->getLignesBudget()->toArray(), static fn (LigneBudget $l): bool => !$saufCachets || !$l->estGeneree()),
+        ));
     }
 }
