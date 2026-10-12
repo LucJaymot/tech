@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Enum\SoireeStatut;
 use App\Repository\SoireeRepository;
+use App\Validator\PassagesSansChevauchement;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -20,6 +21,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  */
 #[ORM\Entity(repositoryClass: SoireeRepository::class)]
 #[ORM\Index(name: 'IDX_SOIREE_COLLECTIVE_DATE', fields: ['collective', 'date'])]
+#[PassagesSansChevauchement]
 class Soiree implements CollectiveScopedInterface
 {
     #[ORM\Id]
@@ -80,6 +82,17 @@ class Soiree implements CollectiveScopedInterface
     #[ORM\OrderBy(['ajouteeLe' => 'ASC'])]
     private Collection $piecesJointes;
 
+    /** @var Collection<int, Passage> The timetable */
+    #[ORM\OneToMany(targetEntity: Passage::class, mappedBy: 'soiree', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['debut' => 'ASC'])]
+    #[Assert\Valid]
+    private Collection $passages;
+
+    /** @var Collection<int, Booking> */
+    #[ORM\OneToMany(targetEntity: Booking::class, mappedBy: 'soiree', cascade: ['persist'])]
+    #[Assert\Valid]
+    private Collection $bookings;
+
     public function __construct(Collective $collective, string $nom, \DateTimeImmutable $date, \DateTimeImmutable $ouverture, \DateTimeImmutable $fermeture)
     {
         $this->collective = $collective;
@@ -90,6 +103,8 @@ class Soiree implements CollectiveScopedInterface
         $this->postes = new ArrayCollection();
         $this->lignesBudget = new ArrayCollection();
         $this->piecesJointes = new ArrayCollection();
+        $this->passages = new ArrayCollection();
+        $this->bookings = new ArrayCollection();
     }
 
     #[Assert\Callback]
@@ -273,5 +288,21 @@ class Soiree implements CollectiveScopedInterface
     public function getPiecesJointes(): Collection
     {
         return $this->piecesJointes;
+    }
+
+    /**
+     * @return Collection<int, Passage>
+     */
+    public function getPassages(): Collection
+    {
+        return $this->passages;
+    }
+
+    /**
+     * @return Collection<int, Booking>
+     */
+    public function getBookings(): Collection
+    {
+        return $this->bookings;
     }
 }

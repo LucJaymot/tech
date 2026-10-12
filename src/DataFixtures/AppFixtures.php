@@ -2,15 +2,21 @@
 
 namespace App\DataFixtures;
 
+use App\Booking\Hospitalite;
+use App\Booking\Rider;
+use App\Entity\Artiste;
+use App\Entity\Booking;
 use App\Entity\Collective;
 use App\Entity\Lieu;
 use App\Entity\LigneBudget;
 use App\Entity\Membership;
+use App\Entity\Passage;
 use App\Entity\Poste;
 use App\Entity\Soiree;
 use App\Entity\User;
 use App\Enum\LigneBudgetType;
 use App\Enum\MembershipRole;
+use App\Enum\ModeRemuneration;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -99,5 +105,31 @@ class AppFixtures extends Fixture
         new LigneBudget($soiree, 'Entrées', LigneBudgetType::Recette, 80000);
         new LigneBudget($soiree, 'Ventes buvette', LigneBudgetType::Recette, 45000);
         $manager->persist($soiree);
+
+        $this->loadProgramme($manager, $soiree);
+    }
+
+    private function loadProgramme(ObjectManager $manager, Soiree $soiree): void
+    {
+        $jour = $soiree->getDate();
+        $lila = new Artiste($soiree->getCollective(), 'Lila Moon');
+        $kumo = (new Artiste($soiree->getCollective(), 'DJ Kumo'))->setEmail('kumo@example.com');
+        $nadia = new Artiste($soiree->getCollective(), 'Nadia K');
+        array_map($manager->persist(...), [$lila, $kumo, $nadia]);
+
+        $concert = new Passage($soiree, $jour->setTime(20, 0), $jour->setTime(21, 0));
+        $b2b = new Passage($soiree, $jour->setTime(23, 0), $jour->modify('+1 day')->setTime(1, 0));
+
+        (new Booking($soiree, $lila, 60000, ModeRemuneration::Cession))
+            ->setPassage($concert)
+            ->setRider(new Rider(30, 20, ['Piano numérique', '2 micros chant'], ['Guitare'], 'Retour de scène côté jardin.'))
+            ->setHospitalite(new Hospitalite(2, ['végétarien'], 4));
+        (new Booking($soiree, $kumo, 25000, ModeRemuneration::Guso))
+            ->setPassage($b2b)
+            ->setRider(new Rider(15, 0, ['2 platines CDJ', 'Table de mixage'], ['Clé USB']))
+            ->setHospitalite(new Hospitalite(1, [], 2, true));
+        (new Booking($soiree, $nadia, 25000, ModeRemuneration::Guso))
+            ->setPassage($b2b)
+            ->setHospitalite(new Hospitalite(1, ['sans gluten'], 2));
     }
 }

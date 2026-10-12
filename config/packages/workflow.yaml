@@ -29,3 +29,49 @@ framework:
                     guard: "is_granted('SOIREE_FAIRE_BILAN', subject)"
                     from: terminee
                     to: bilan_fait
+
+        # Life cycle of a booking. Guarded by App\Security\Voter\BookingVoter;
+        # the GUSO declaration is mandatory for GUSO bookings and impossible otherwise.
+        # Every applied transition is kept as a BookingTransition.
+        booking:
+            type: state_machine
+            audit_trail:
+                enabled: '%kernel.debug%'
+            marking_store:
+                type: method
+                property: statut
+            supports:
+                - App\Entity\Booking
+            initial_marking: contacte
+            places:
+                - contacte
+                - negociation
+                - confirme
+                - contrat_signe
+                - declare_guso
+                - paye
+            transitions:
+                -   name: negocier
+                    guard: "is_granted('BOOKING_EDIT', subject)"
+                    from: contacte
+                    to: negociation
+                -   name: confirmer
+                    guard: "is_granted('BOOKING_EDIT', subject)"
+                    from: negociation
+                    to: confirme
+                -   name: signer_contrat
+                    guard: "is_granted('BOOKING_EDIT', subject)"
+                    from: confirme
+                    to: contrat_signe
+                -   name: declarer_guso
+                    guard: "is_granted('BOOKING_PAIEMENT', subject) and subject.estGuso()"
+                    from: contrat_signe
+                    to: declare_guso
+                -   name: payer
+                    guard: "is_granted('BOOKING_PAIEMENT', subject) and not subject.estGuso()"
+                    from: contrat_signe
+                    to: paye
+                -   name: payer
+                    guard: "is_granted('BOOKING_PAIEMENT', subject)"
+                    from: declare_guso
+                    to: paye

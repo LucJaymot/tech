@@ -1,0 +1,7 @@
+{% extends 'base.html.twig' %}
+
+{# Shared without an account: no application header nor navigation. #}
+{% block header %}{% endblock %}
+{% block navigation %}{% endblock %}
+{% block javascripts %}{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ asset('styles/app.css') }}">{% endblock %}
