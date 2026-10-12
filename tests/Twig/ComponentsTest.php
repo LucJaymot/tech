@@ -49,6 +49,18 @@ final class ComponentsTest extends KernelTestCase
         self::assertStringContainsString('ml-2', self::classOf($badge));
     }
 
+    public function testLedAlwaysCarriesItsLabelAndStatusText(): void
+    {
+        $led = $this->renderTwigComponent('Led', ['statut' => 'bloquant', 'libelle' => '2 manquants'])->crawler()->filter('[data-led]');
+
+        self::assertSame('bloquant', $led->attr('data-led'));
+        self::assertSame('Bloquant : 2 manquants', trim((string) preg_replace('/\s+/', ' ', $led->text())));
+        self::assertStringContainsString('bg-red-500', self::classOf($led->filter('span[aria-hidden="true"]')));
+
+        $ok = $this->renderTwigComponent('Led', ['statut' => 'ok', 'libelle' => 'Complet'])->crawler()->filter('[data-led]');
+        self::assertSame('OK : Complet', trim((string) preg_replace('/\s+/', ' ', $ok->text())));
+    }
+
     public function testCardAndEmptyStateKeepTheirClassesWithExtraClass(): void
     {
         $card = $this->renderTwigComponent('Card', ['class' => 'mt-6'])->crawler()->filter('section');

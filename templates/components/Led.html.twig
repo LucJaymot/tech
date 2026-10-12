@@ -1,0 +1,22 @@
+{#
+    Status light with its label, never colour alone.
+    <twig:Led statut="bloquant" libelle="2 personnes manquantes" />
+    Statuts : ok, attention, bloquant.
+#}
+{% props statut = 'ok', libelle %}
+{% set led = html_cva(
+    base: 'size-2.5 shrink-0 rounded-full ring-2',
+    variants: {
+        statut: {
+            ok: 'bg-emerald-400 ring-emerald-400/30',
+            attention: 'bg-amber-400 ring-amber-400/30',
+            bloquant: 'bg-red-500 ring-red-500/30 motion-safe:animate-pulse',
+        },
+    },
+) %}
+<span {{ attributes.defaults({class: 'inline-flex items-center gap-2 text-sm'}) }} data-led="{{ statut }}">
+    <span class="{{ led.apply({statut: statut}) }}" aria-hidden="true"></span>
+    <span class="{{ statut == 'bloquant' ? 'font-semibold text-red-300' : (statut == 'attention' ? 'text-amber-200' : 'text-slate-300') }}">
+        <span class="sr-only">{{ {ok: 'OK', attention: 'Attention', bloquant: 'Bloquant'}[statut] }} : </span>{{ libelle }}
+    </span>
+</span>

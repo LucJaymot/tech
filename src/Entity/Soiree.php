@@ -69,7 +69,7 @@ class Soiree implements CollectiveScopedInterface
 
     /** @var Collection<int, Poste> */
     #[ORM\OneToMany(targetEntity: Poste::class, mappedBy: 'soiree', cascade: ['persist'], orphanRemoval: true)]
-    #[ORM\OrderBy(['debut' => 'ASC', 'id' => 'ASC'])]
+    #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $postes;
 
     /** @var Collection<int, LigneBudget> */

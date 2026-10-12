@@ -4,9 +4,13 @@ namespace App\DataFixtures;
 
 use App\Booking\Hospitalite;
 use App\Booking\Rider;
+use App\Entity\Affectation;
 use App\Entity\Artiste;
+use App\Entity\Benevole;
 use App\Entity\Booking;
 use App\Entity\Collective;
+use App\Entity\Creneau;
+use App\Entity\Disponibilite;
 use App\Entity\Lieu;
 use App\Entity\LigneBudget;
 use App\Entity\Membership;
@@ -30,6 +34,8 @@ class AppFixtures extends Fixture
 {
     private const string PASSWORD = 'password';
 
+    private User $theo;
+
     public function __construct(
         private readonly UserPasswordHasherInterface $passwordHasher,
     ) {
@@ -49,6 +55,9 @@ class AppFixtures extends Fixture
             $user->setPassword($this->passwordHasher->hashPassword($user, self::PASSWORD));
             $manager->persist($user);
             $users[$key] = $user;
+            if ('theo' === $key) {
+                $this->theo = $user;
+            }
         }
 
         $collectiveEntities = [];
@@ -99,8 +108,6 @@ class AppFixtures extends Fixture
             ->setJauge(100)
             ->setBuvette(true)
             ->setArtistesPayes(true);
-        new Poste($soiree, 'Accueil', new \DateTimeImmutable('18:30'), new \DateTimeImmutable('22:00'), 2);
-        new Poste($soiree, 'Buvette', new \DateTimeImmutable('19:00'), new \DateTimeImmutable('01:00'), 3);
         new LigneBudget($soiree, LigneBudgetType::Depense, CategorieBudget::Technique, 'Location sono', 15000);
         new LigneBudget($soiree, LigneBudgetType::Depense, CategorieBudget::Buvette, 'Achats buvette', 25000);
         new LigneBudget($soiree, LigneBudgetType::Recette, CategorieBudget::Billetterie, 'Entrées', 80000);
@@ -108,6 +115,31 @@ class AppFixtures extends Fixture
         $manager->persist($soiree);
 
         $this->loadProgramme($manager, $soiree);
+        $this->loadBenevolat($manager, $soiree);
+    }
+
+    /**
+     * Three créneaux, two assignments: 4 people still missing (Accueil 1,
+     * Buvette 19 h 1, Buvette 22 h 2).
+     */
+    private function loadBenevolat(ObjectManager $manager, Soiree $soiree): void
+    {
+        $jour = $soiree->getDate();
+        $accueil = new Creneau(new Poste($soiree, 'Accueil'), $jour->setTime(18, 30), $jour->setTime(22, 0), 2);
+        $buvette = new Poste($soiree, 'Buvette');
+        $buvetteSoir = new Creneau($buvette, $jour->setTime(19, 0), $jour->setTime(22, 0), 2);
+        $buvetteNuit = new Creneau($buvette, $jour->setTime(22, 0), $jour->modify('+1 day')->setTime(1, 0), 2);
+
+        $collective = $soiree->getCollective();
+        $lea = (new Benevole($collective, 'Léa Fontaine'))->setEmail('lea@example.com');
+        $theo = (new Benevole($collective, 'Théo Lambert'))->setUser($this->theo);
+        $sam = new Benevole($collective, 'Sam');
+        array_map($manager->persist(...), [$lea, $theo, $sam]);
+
+        $manager->persist(new Affectation($accueil, $lea));
+        $manager->persist(new Affectation($buvetteSoir, $theo));
+        $manager->persist(new Disponibilite($buvetteNuit, $lea));
+        $manager->persist(new Disponibilite($buvetteNuit, $sam));
     }
 
     private function loadProgramme(ObjectManager $manager, Soiree $soiree): void

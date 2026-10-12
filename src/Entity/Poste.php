@@ -3,12 +3,13 @@
 namespace App\Entity;
 
 use App\Repository\PosteRepository;
-use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * A volunteer position to fill during a soirée (bar, door, sound…).
+ * A volunteer role during a soirée (bar, door, sound…), staffed through its créneaux.
  */
 #[ORM\Entity(repositoryClass: PosteRepository::class)]
 class Poste implements CollectiveScopedInterface
@@ -32,24 +33,18 @@ class Poste implements CollectiveScopedInterface
     #[Assert\Length(max: 100)]
     private string $intitule;
 
-    #[ORM\Column(type: Types::TIME_IMMUTABLE)]
-    private \DateTimeImmutable $debut;
+    /** @var Collection<int, Creneau> */
+    #[ORM\OneToMany(targetEntity: Creneau::class, mappedBy: 'poste', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['debut' => 'ASC', 'id' => 'ASC'])]
+    #[Assert\Valid]
+    private Collection $creneaux;
 
-    #[ORM\Column(type: Types::TIME_IMMUTABLE)]
-    private \DateTimeImmutable $fin;
-
-    #[ORM\Column]
-    #[Assert\Positive]
-    private int $nombrePersonnes;
-
-    public function __construct(Soiree $soiree, string $intitule, \DateTimeImmutable $debut, \DateTimeImmutable $fin, int $nombrePersonnes = 1)
+    public function __construct(Soiree $soiree, string $intitule)
     {
         $this->soiree = $soiree;
         $this->collective = $soiree->getCollective();
         $this->intitule = $intitule;
-        $this->debut = $debut;
-        $this->fin = $fin;
-        $this->nombrePersonnes = $nombrePersonnes;
+        $this->creneaux = new ArrayCollection();
 
         $soiree->getPostes()->add($this);
     }
@@ -74,18 +69,11 @@ class Poste implements CollectiveScopedInterface
         return $this->intitule;
     }
 
-    public function getDebut(): \DateTimeImmutable
+    /**
+     * @return Collection<int, Creneau>
+     */
+    public function getCreneaux(): Collection
     {
-        return $this->debut;
-    }
-
-    public function getFin(): \DateTimeImmutable
-    {
-        return $this->fin;
-    }
-
-    public function getNombrePersonnes(): int
-    {
-        return $this->nombrePersonnes;
+        return $this->creneaux;
     }
 }

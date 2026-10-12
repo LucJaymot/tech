@@ -2,6 +2,7 @@
 
 namespace App\Soiree;
 
+use App\Entity\Creneau;
 use App\Entity\LigneBudget;
 use App\Entity\Poste;
 use App\Entity\Soiree;
@@ -10,10 +11,11 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * Creates a new soirée from an existing one.
  *
- * Copies the lieu, opening hours, jauge, buvette, artistes payés, postes and
- * forecast budget (without fee lines, which follow the bookings). Never copies
- * dates (the new one is given), actual amounts, assignments or check-ins of
- * the postes, nor attachments. The copy starts in preparation.
+ * Copies the lieu, opening hours, jauge, buvette, artistes payés, postes with
+ * their créneaux (moved to the new date) and forecast budget (without fee
+ * lines, which follow the bookings). Never copies dates (the new one is
+ * given), actual amounts, assignments, availabilities or check-ins, nor
+ * attachments. The copy starts in preparation.
  */
 final class SoireeDuplicator
 {
@@ -30,9 +32,14 @@ final class SoireeDuplicator
             ->setBuvette($source->hasBuvette())
             ->setArtistesPayes($source->hasArtistesPayes());
 
-        // Field by field, so that what is attached to a poste is never carried over.
+        // Field by field, so that assignments and availabilities are never carried
+        // over; créneaux move with the date, keeping their hours.
+        $decalage = $source->getDate()->diff($copy->getDate());
         foreach ($source->getPostes() as $poste) {
-            new Poste($copy, $poste->getIntitule(), $poste->getDebut(), $poste->getFin(), $poste->getNombrePersonnes());
+            $nouveau = new Poste($copy, $poste->getIntitule());
+            foreach ($poste->getCreneaux() as $creneau) {
+                new Creneau($nouveau, $creneau->getDebut()->add($decalage), $creneau->getFin()->add($decalage), $creneau->getNombreRequis());
+            }
         }
         // Forecast amounts only; fee lines follow bookings, which are not copied.
         foreach ($source->getLignesBudget() as $ligne) {

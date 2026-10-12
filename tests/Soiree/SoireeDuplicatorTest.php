@@ -2,18 +2,20 @@
 
 namespace App\Tests\Soiree;
 
+use App\Entity\Creneau;
 use App\Entity\LigneBudget;
-use App\Entity\Poste;
 use App\Entity\Soiree;
 use App\Repository\SoireeRepository;
 use App\Soiree\PiecesJointes;
 use App\Soiree\SoireeDuplicator;
 use App\Tests\Support\ActsAsMember;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\File\File;
 
 /**
- * Relies on AppFixtures: "Concert de printemps" with 2 postes and 4 budget lines.
+ * Relies on AppFixtures: "Concert de printemps" with 2 postes (3 créneaux, 2 assignments,
+ * 2 availabilities) and 4 hand-typed budget lines.
  */
 final class SoireeDuplicatorTest extends KernelTestCase
 {
@@ -54,11 +56,22 @@ final class SoireeDuplicatorTest extends KernelTestCase
         self::assertTrue($copy->hasBuvette());
         self::assertTrue($copy->hasArtistesPayes());
 
+        // Same postes and créneaux, moved to the new date: 19:00–22:00 and 22:00–01:00 the next day.
         self::assertSame($this->postes($source), $this->postes($copy));
-        foreach ($copy->getPostes() as $poste) {
-            self::assertSame($copy, $poste->getSoiree());
-            self::assertNotNull($poste->getId());
+        self::assertSame(['2027-03-20 18:30', '2027-03-20 19:00', '2027-03-20 22:00'], array_map(
+            static fn (Creneau $c): string => $c->getDebut()->format('Y-m-d H:i'),
+            $this->creneaux($copy),
+        ));
+        self::assertSame('2027-03-21 01:00', $this->creneaux($copy)[2]->getFin()->format('Y-m-d H:i'));
+        foreach ($this->creneaux($copy) as $creneau) {
+            self::assertSame($copy, $creneau->getSoiree());
+            self::assertNotNull($creneau->getId());
+            self::assertCount(0, $creneau->getAffectations(), 'Assignments are never copied.');
         }
+        self::assertSame(0, (int) static::getContainer()->get(Connection::class)->fetchOne(
+            'SELECT COUNT(*) FROM disponibilite d JOIN creneau c ON c.id = d.creneau_id WHERE c.soiree_id = ?',
+            [$copy->getId()],
+        ), 'Availabilities are never copied.');
         // Hand-typed lines are copied, forecast only; fee lines follow bookings, which are not copied.
         self::assertSame($this->budget($source, saufCachets: true), $this->budget($copy));
         self::assertCount(4, $copy->getLignesBudget());
@@ -101,10 +114,29 @@ final class SoireeDuplicatorTest extends KernelTestCase
      */
     private function postes(Soiree $soiree): array
     {
-        return array_map(
-            static fn (Poste $p): string => \sprintf('%s %s-%s x%d', $p->getIntitule(), $p->getDebut()->format('H:i'), $p->getFin()->format('H:i'), $p->getNombrePersonnes()),
-            array_values($soiree->getPostes()->toArray()),
-        );
+        $postes = [];
+        foreach ($soiree->getPostes() as $poste) {
+            foreach ($poste->getCreneaux() as $c) {
+                $jours = (int) $soiree->getDate()->diff($c->getFin()->setTime(0, 0))->format('%a');
+                $postes[] = \sprintf('%s %s-%s%s x%d', $poste->getIntitule(), $c->getDebut()->format('H:i'), $c->getFin()->format('H:i'), $jours > 0 ? ' (+1)' : '', $c->getNombreRequis());
+            }
+        }
+
+        return $postes;
+    }
+
+    /**
+     * @return list<Creneau>
+     */
+    private function creneaux(Soiree $soiree): array
+    {
+        $creneaux = [];
+        foreach ($soiree->getPostes() as $poste) {
+            array_push($creneaux, ...$poste->getCreneaux()->toArray());
+        }
+        usort($creneaux, static fn (Creneau $a, Creneau $b): int => $a->getDebut() <=> $b->getDebut());
+
+        return $creneaux;
     }
 
     /**

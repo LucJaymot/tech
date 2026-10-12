@@ -1,0 +1,52 @@
+{% extends 'feuille_artiste/_layout.html.twig' %}
+
+{% block title %}{{ vue.soiree }} · {{ vue.benevole }}{% endblock %}
+
+{% block body %}
+    <p class="text-sm text-slate-400">Espace bénévole · {{ vue.benevole }}</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ vue.soiree }}</h1>
+    <p class="mt-1 text-slate-300">{{ vue.date|date('d/m/Y') }} · ouverture {{ vue.ouverture|date('H:i') }}, fermeture {{ vue.fermeture|date('H:i') }}</p>
+
+    <div class="mt-6 flex flex-col gap-4">
+        <twig:Card title="Votre planning">
+            <ul class="flex flex-col gap-2" id="planning">
+                {% for affectation in vue.affectations %}
+                    <li class="flex gap-4"><span class="w-28 shrink-0 tabular-nums text-slate-400">{{ affectation.debut|date('H:i') }} – {{ affectation.fin|date('H:i') }}</span> <span>{{ affectation.poste }}</span></li>
+                {% else %}
+                    <li class="text-slate-400">Pas encore d'affectation. Indiquez vos disponibilités ci-dessous.</li>
+                {% endfor %}
+            </ul>
+        </twig:Card>
+
+        {% if vue.lieu %}
+            <twig:Card title="Lieu">
+                <p class="font-medium">{{ vue.lieu }}</p>
+                <p class="mt-1 whitespace-pre-line text-slate-300">{{ vue.adresse }}</p>
+                {% if vue.acces %}<p class="mt-3 text-sm text-slate-400">Accès : {{ vue.acces }}</p>{% endif %}
+            </twig:Card>
+        {% endif %}
+
+        <twig:Card title="Vos disponibilités" description="{{ vue.modifiable ? 'Cochez les créneaux où vous pouvez aider.' : 'La soirée est passée : les disponibilités ne peuvent plus changer.' }}">
+            <form method="post" class="flex flex-col gap-4" id="disponibilites">
+                <input type="hidden" name="_token" value="{{ csrf_token(token_id) }}">
+                {% for poste, creneaux in vue.creneauxParPoste %}
+                    <fieldset class="flex flex-col gap-2" {{ vue.modifiable ? '' : 'disabled' }}>
+                        <legend class="mb-1 font-medium">{{ poste }}</legend>
+                        {% for creneau in creneaux %}
+                            <label class="flex min-h-12 items-center gap-3 rounded-lg border border-slate-700 px-3 has-checked:border-indigo-500 has-checked:bg-indigo-950/40">
+                                <input type="checkbox" name="creneaux[]" value="{{ creneau.id }}" class="size-5 accent-indigo-500" {{ creneau.disponible ? 'checked' }}>
+                                <span class="flex-1 tabular-nums">{{ creneau.debut|date('H:i') }} – {{ creneau.fin|date('H:i') }}</span>
+                                {% if creneau.affecte %}<twig:Badge status="success" :dot="false">vous y êtes</twig:Badge>{% endif %}
+                            </label>
+                        {% endfor %}
+                    </fieldset>
+                {% else %}
+                    <p class="text-slate-400">Aucun créneau pour l'instant.</p>
+                {% endfor %}
+                {% if vue.modifiable and vue.creneauxParPoste is not empty %}
+                    <twig:Button type="submit" size="lg" block>Enregistrer mes disponibilités</twig:Button>
+                {% endif %}
+            </form>
+        </twig:Card>
+    </div>
+{% endblock %}
