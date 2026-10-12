@@ -72,7 +72,7 @@ final class CollectiveVoterTest extends TestCase
     private function voter(?Membership $membership): CollectiveVoter
     {
         $memberships = $this->createStub(MembershipRepository::class);
-        $memberships->method('findOneBy')->willReturn($membership);
+        $memberships->method('findRole')->willReturn($membership?->getRole());
 
         return new CollectiveVoter($memberships);
     }

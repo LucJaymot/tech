@@ -1,0 +1,31 @@
+# Read the documentation at https://github.com/thephpleague/flysystem-bundle/blob/master/docs/1-getting-started.md
+
+# Soirée attachments, see App\Soiree\PiecesJointes.
+# Local disk in dev and test, S3-compatible object storage hosted in the EU in prod.
+when@dev: &local
+    flysystem:
+        storages:
+            pieces_jointes.storage:
+                local:
+                    directory: '%kernel.project_dir%/var/storage/%kernel.environment%/pieces_jointes'
+
+when@test: *local
+
+when@prod:
+    services:
+        app.object_storage.client:
+            class: AsyncAws\S3\S3Client
+            arguments:
+                -   endpoint: '%env(OBJECT_STORAGE_ENDPOINT)%'
+                    region: '%env(OBJECT_STORAGE_REGION)%'
+                    accessKeyId: '%env(OBJECT_STORAGE_ACCESS_KEY)%'
+                    accessKeySecret: '%env(OBJECT_STORAGE_SECRET_KEY)%'
+                    pathStyleEndpoint: true
+
+    flysystem:
+        storages:
+            pieces_jointes.storage:
+                asyncaws:
+                    client: 'app.object_storage.client'
+                    bucket: '%env(OBJECT_STORAGE_BUCKET)%'
+                    prefix: 'pieces-jointes'

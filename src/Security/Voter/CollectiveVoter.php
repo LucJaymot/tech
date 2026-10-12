@@ -52,15 +52,15 @@ final class CollectiveVoter extends Voter
         }
 
         // Filtered to the active collective: any other collective is denied.
-        $membership = $this->memberships->findOneBy(['user' => $user, 'collective' => $subject]);
-        if (null === $membership) {
+        $role = $this->memberships->findRole($user, $subject);
+        if (null === $role) {
             $vote?->addReason('Not a member of the active collective.');
 
             return false;
         }
 
-        if (!\in_array($membership->getRole(), self::ALLOWED_ROLES[$attribute], true)) {
-            $vote?->addReason(\sprintf('The "%s" role does not allow this.', $membership->getRole()->value));
+        if (!\in_array($role, self::ALLOWED_ROLES[$attribute], true)) {
+            $vote?->addReason(\sprintf('The "%s" role does not allow this.', $role->value));
 
             return false;
         }

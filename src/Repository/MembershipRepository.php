@@ -6,6 +6,7 @@ use App\Collective\CollectiveChoice;
 use App\Entity\Collective;
 use App\Entity\Membership;
 use App\Entity\User;
+use App\Enum\MembershipRole;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -33,6 +34,15 @@ class MembershipRepository extends ServiceEntityRepository
             ->addOrderBy('u.displayName')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * The role of $user in $collective, or null if they are not a member.
+     * Subject to the "collective" filter: null for any collective but the active one.
+     */
+    public function findRole(User $user, Collective $collective): ?MembershipRole
+    {
+        return $this->findOneBy(['user' => $user, 'collective' => $collective])?->getRole();
     }
 
     /**

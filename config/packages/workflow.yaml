@@ -1,0 +1,31 @@
+framework:
+    workflows:
+        # Life cycle of a soirée. Each transition is guarded by App\Security\Voter\SoireeVoter.
+        soiree:
+            type: state_machine
+            audit_trail:
+                enabled: '%kernel.debug%'
+            marking_store:
+                type: method
+                property: statut
+            supports:
+                - App\Entity\Soiree
+            initial_marking: preparation
+            places:
+                - preparation
+                - confirmee
+                - terminee
+                - bilan_fait
+            transitions:
+                confirmer:
+                    guard: "is_granted('SOIREE_CONFIRMER', subject)"
+                    from: preparation
+                    to: confirmee
+                terminer:
+                    guard: "is_granted('SOIREE_TERMINER', subject)"
+                    from: confirmee
+                    to: terminee
+                faire_bilan:
+                    guard: "is_granted('SOIREE_FAIRE_BILAN', subject)"
+                    from: terminee
+                    to: bilan_fait

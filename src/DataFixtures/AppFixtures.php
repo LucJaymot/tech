@@ -3,15 +3,20 @@
 namespace App\DataFixtures;
 
 use App\Entity\Collective;
+use App\Entity\Lieu;
+use App\Entity\LigneBudget;
 use App\Entity\Membership;
+use App\Entity\Poste;
+use App\Entity\Soiree;
 use App\Entity\User;
+use App\Enum\LigneBudgetType;
 use App\Enum\MembershipRole;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * Development data: two collectives and their members.
+ * Development data: two collectives and their members, and a soirée of the Jardin.
  * Every account uses the password "password".
  */
 class AppFixtures extends Fixture
@@ -39,6 +44,7 @@ class AppFixtures extends Fixture
             $users[$key] = $user;
         }
 
+        $collectiveEntities = [];
         $collectives = [
             'jardin-des-lilas' => [
                 'name' => 'Jardin partagé des Lilas',
@@ -62,12 +68,36 @@ class AppFixtures extends Fixture
         foreach ($collectives as $slug => $data) {
             $collective = new Collective($data['name'], $slug);
             $manager->persist($collective);
+            $collectiveEntities[$slug] = $collective;
 
             foreach ($data['members'] as $userKey => $role) {
                 $manager->persist(new Membership($users[$userKey], $collective, $role));
             }
         }
 
+        $this->loadSoirees($manager, $collectiveEntities['jardin-des-lilas']);
+
         $manager->flush();
+    }
+
+    private function loadSoirees(ObjectManager $manager, Collective $collective): void
+    {
+        $lieu = (new Lieu($collective, 'Salle des Lilas', "12 rue des Lilas\n75019 Paris", 120))
+            ->setAcces('Entrée par la cour, rampe d\'accès à gauche.')
+            ->setAmenagePourPublic(true);
+        $manager->persist($lieu);
+
+        $soiree = (new Soiree($collective, 'Concert de printemps', new \DateTimeImmutable('+3 weeks'), new \DateTimeImmutable('19:00'), new \DateTimeImmutable('01:00')))
+            ->setLieu($lieu)
+            ->setJauge(100)
+            ->setBuvette(true)
+            ->setArtistesPayes(true);
+        new Poste($soiree, 'Accueil', new \DateTimeImmutable('18:30'), new \DateTimeImmutable('22:00'), 2);
+        new Poste($soiree, 'Buvette', new \DateTimeImmutable('19:00'), new \DateTimeImmutable('01:00'), 3);
+        new LigneBudget($soiree, 'Cachets des artistes', LigneBudgetType::Depense, 60000);
+        new LigneBudget($soiree, 'Achats buvette', LigneBudgetType::Depense, 25000);
+        new LigneBudget($soiree, 'Entrées', LigneBudgetType::Recette, 80000);
+        new LigneBudget($soiree, 'Ventes buvette', LigneBudgetType::Recette, 45000);
+        $manager->persist($soiree);
     }
 }
