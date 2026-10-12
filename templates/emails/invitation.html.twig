@@ -1,0 +1,5 @@
+<p>Bonjour,</p>
+<p>{{ inviter ?: 'Un administrateur' }} vous invite à rejoindre <strong>{{ collective }}</strong> en tant que {{ role|lower }}.</p>
+<p><a href="{{ accept_url }}" style="display:inline-block;padding:12px 20px;background:#6366f1;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;">Voir l'invitation</a></p>
+<p>Ce lien est valable jusqu'au {{ expires_at|date('d/m/Y', 'Europe/Paris') }} et ne sert qu'une fois.</p>
+<p style="color:#64748b;font-size:13px;">Si vous ne connaissez pas ce collectif, ignorez ce message.</p>

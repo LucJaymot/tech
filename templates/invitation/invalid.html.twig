@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Invitation invalide{% endblock %}
+
+{% block body %}
+    <twig:EmptyState title="Cette invitation n'est plus valable" description="Elle a expiré, a déjà été utilisée ou a été annulée. Demandez à un administrateur du collectif de vous en envoyer une nouvelle.">
+        <twig:Button variant="secondary" href="{{ path('app_home') }}">Retour à l'accueil</twig:Button>
+    </twig:EmptyState>
+{% endblock %}

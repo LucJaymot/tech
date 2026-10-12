@@ -1,0 +1,8 @@
+Bonjour{{ display_name ? ' ' ~ display_name }},
+
+Pour vous connecter, ouvrez ce lien sur l'appareil de votre choix :
+{{ login_url }}
+
+Il est valable jusqu'à {{ expires_at|date('H:i', 'Europe/Paris') }} et ne sert qu'une fois.
+
+Si vous n'avez pas demandé ce lien, ignorez ce message.

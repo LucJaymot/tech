@@ -1,0 +1,16 @@
+framework:
+    rate_limiter:
+        # Login link requests, see App\Controller\SecurityController
+        login_link_ip:
+            policy: sliding_window
+            limit: 10
+            interval: '15 minutes'
+        login_link_email:
+            policy: sliding_window
+            limit: 3
+            interval: '15 minutes'
+        # Invitations sent per inviting user, see App\Controller\InvitationController
+        invitation:
+            policy: sliding_window
+            limit: 20
+            interval: '1 hour'

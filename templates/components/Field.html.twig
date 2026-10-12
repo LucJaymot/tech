@@ -1,0 +1,35 @@
+{#
+    Champ de formulaire Symfony : libellé, widget, aide et erreurs.
+    <twig:Field :field="form.email" />
+    <twig:Field :field="form.email" label="Adresse e-mail" placeholder="vous@exemple.fr" />
+#}
+{% props field, label = null, placeholder = null %}
+{% set has_errors = field.vars.errors|length > 0 %}
+{% set is_checkbox = 'checkbox' in field.vars.block_prefixes %}
+{% set widget_attr = field.vars.attr|merge({
+    'aria-invalid': has_errors ? 'true' : 'false',
+}) %}
+{% if placeholder %}{% set widget_attr = widget_attr|merge({placeholder: placeholder}) %}{% endif %}
+
+<div {{ attributes.defaults({class: 'flex flex-col gap-1.5'}) }}>
+    {% if is_checkbox %}
+        <div class="flex items-start gap-3">
+            {{ form_widget(field, {attr: widget_attr|merge({
+                class: ('mt-0.5 size-5 shrink-0 rounded border-slate-600 bg-slate-900 accent-indigo-500 ' ~ (widget_attr.class ?? ''))|trim,
+            })}) }}
+            {{ form_label(field, label, {label_attr: {class: 'text-sm text-slate-200'}}) }}
+        </div>
+    {% else %}
+        {{ form_label(field, label, {label_attr: {class: 'text-sm font-medium text-slate-200'}}) }}
+        {{ form_widget(field, {attr: widget_attr|merge({
+            class: ('block w-full rounded-lg border bg-slate-900 px-3 py-2.5 text-base text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 '
+                ~ (has_errors ? 'border-red-500' : 'border-slate-700') ~ ' ' ~ (widget_attr.class ?? ''))|trim,
+        })}) }}
+    {% endif %}
+
+    {{ form_help(field, {help_attr: {class: 'text-sm text-slate-400'}}) }}
+
+    {% for error in field.vars.errors %}
+        <p class="text-sm text-red-400">{{ error.message }}</p>
+    {% endfor %}
+</div>

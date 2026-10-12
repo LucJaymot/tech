@@ -1,0 +1,26 @@
+{% set styles = {
+    success: 'border-emerald-700 bg-emerald-950 text-emerald-100',
+    error: 'border-red-700 bg-red-950 text-red-100',
+    warning: 'border-amber-700 bg-amber-950 text-amber-100',
+    info: 'border-sky-700 bg-sky-950 text-sky-100',
+} %}
+{% set flashes = app.flashes %}
+{% if flashes is not empty %}
+<div class="mb-6 flex flex-col gap-2">
+    {% for type, messages in flashes %}
+        {% for message in messages %}
+            <div data-controller="flash"
+                 {% if type == 'success' or type == 'info' %}data-flash-delay-value="5000"{% endif %}
+                 role="{{ type == 'error' ? 'alert' : 'status' }}"
+                 class="flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg transition-opacity duration-300 {{ styles[type] ?? styles.info }}">
+                <p class="flex-1">{{ message|trans }}</p>
+                <button type="button" data-action="flash#close" class="-m-2 p-2 opacity-70 hover:opacity-100" aria-label="Fermer">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endif %}

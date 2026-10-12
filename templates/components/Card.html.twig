@@ -1,0 +1,24 @@
+{#
+    Carte avec titre, description et pied optionnels.
+    <twig:Card title="Profil" description="Vos informations">
+        Contenu
+        <twig:block name="footer"><twig:Button>Modifier</twig:Button></twig:block>
+    </twig:Card>
+#}
+{% props title = null, description = null %}
+<section {{ attributes.defaults({class: 'overflow-hidden rounded-xl border border-slate-800 bg-slate-900'}) }}>
+    {% if title or description %}
+        <header class="border-b border-slate-800 px-4 py-3 sm:px-5">
+            {% if title %}<h2 class="text-base font-semibold text-slate-100">{{ title }}</h2>{% endif %}
+            {% if description %}<p class="mt-0.5 text-sm text-slate-400">{{ description }}</p>{% endif %}
+        </header>
+    {% endif %}
+    <div class="px-4 py-4 sm:px-5">
+        {% block content %}{% endblock %}
+    </div>
+    {% if block('footer')|trim is not empty %}
+        <footer class="flex flex-wrap justify-end gap-2 border-t border-slate-800 bg-slate-900/60 px-4 py-3 sm:px-5">
+            {% block footer %}{% endblock %}
+        </footer>
+    {% endif %}
+</section>

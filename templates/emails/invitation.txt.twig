@@ -1,0 +1,10 @@
+Bonjour,
+
+{{ inviter ?: 'Un administrateur' }} vous invite à rejoindre {{ collective }} en tant que {{ role|lower }}.
+
+Voir l'invitation :
+{{ accept_url }}
+
+Ce lien est valable jusqu'au {{ expires_at|date('d/m/Y', 'Europe/Paris') }} et ne sert qu'une fois.
+
+Si vous ne connaissez pas ce collectif, ignorez ce message.

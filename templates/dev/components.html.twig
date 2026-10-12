@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Composants{% endblock %}
+
+{% block body %}
+    <h1 class="text-2xl font-bold sm:text-3xl">Composants</h1>
+    <p class="mt-2 text-slate-400">Page interne, disponible uniquement en environnement de dev.</p>
+
+    <div class="mt-8 flex flex-col gap-6">
+        <twig:Card title="Bouton" description="Variantes, tailles, lien et état désactivé.">
+            <div class="flex flex-wrap gap-2">
+                <twig:Button>Principal</twig:Button>
+                <twig:Button variant="secondary">Secondaire</twig:Button>
+                <twig:Button variant="danger">Supprimer</twig:Button>
+                <twig:Button variant="ghost">Discret</twig:Button>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <twig:Button size="sm">Petit</twig:Button>
+                <twig:Button size="md">Moyen</twig:Button>
+                <twig:Button size="lg">Grand</twig:Button>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <twig:Button variant="secondary" href="{{ path('app_home') }}">Lien vers l'accueil</twig:Button>
+                <twig:Button disabled>Désactivé</twig:Button>
+            </div>
+            <div class="mt-4">
+                <twig:Button block>Pleine largeur</twig:Button>
+            </div>
+        </twig:Card>
+
+        <twig:Card title="Badge de statut">
+            <div class="flex flex-wrap gap-2">
+                <twig:Badge>Brouillon</twig:Badge>
+                <twig:Badge status="info">En cours</twig:Badge>
+                <twig:Badge status="success">Validé</twig:Badge>
+                <twig:Badge status="warning">En attente</twig:Badge>
+                <twig:Badge status="danger">Refusé</twig:Badge>
+                <twig:Badge status="success" :dot="false">Sans point</twig:Badge>
+            </div>
+        </twig:Card>
+
+        <twig:Card title="Carte" description="Avec titre, description et pied.">
+            <p class="text-sm text-slate-300">Le contenu de la carte va ici. Le pied n'apparaît que s'il est fourni.</p>
+            <twig:block name="footer">
+                <twig:Button variant="ghost" size="sm">Annuler</twig:Button>
+                <twig:Button size="sm">Confirmer</twig:Button>
+            </twig:block>
+        </twig:Card>
+
+        <twig:Card>
+            <p class="text-sm text-slate-300">Carte minimale, sans en-tête ni pied.</p>
+        </twig:Card>
+
+        <twig:Card title="Champ de formulaire" description="Envoyez le formulaire vide pour voir les erreurs.">
+            {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-5'}}) }}
+                <twig:Field :field="form.name" placeholder="Camille Dupont" />
+                <twig:Field :field="form.email" placeholder="vous@exemple.fr" />
+                <twig:Field :field="form.topic" />
+                <twig:Field :field="form.message" />
+                <twig:Field :field="form.terms" />
+                <twig:Button type="submit" block>Envoyer</twig:Button>
+            {{ form_end(form) }}
+        </twig:Card>
+
+        <section class="flex flex-col gap-3">
+            <h2 class="text-base font-semibold">État vide</h2>
+            <twig:EmptyState title="Aucune réservation" description="Vos réservations apparaîtront ici dès que vous en aurez créé une.">
+                <twig:Button href="#">Créer une réservation</twig:Button>
+            </twig:EmptyState>
+            <twig:EmptyState title="Rien à afficher" />
+        </section>
+    </div>
+{% endblock %}

@@ -1,0 +1,5 @@
+<p>Bonjour{{ display_name ? ' ' ~ display_name }},</p>
+<p>Pour vous connecter, ouvrez ce lien sur l'appareil de votre choix :</p>
+<p><a href="{{ login_url }}" style="display:inline-block;padding:12px 20px;background:#6366f1;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;">Me connecter</a></p>
+<p>Il est valable jusqu'à {{ expires_at|date('H:i', 'Europe/Paris') }} et ne sert qu'une fois.</p>
+<p style="color:#64748b;font-size:13px;">Si vous n'avez pas demandé ce lien, ignorez ce message.</p>

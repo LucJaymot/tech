@@ -1,0 +1,23 @@
+{#
+    Badge de statut.
+    <twig:Badge status="success">Validé</twig:Badge>
+    Statuts : neutral, info, success, warning, danger.
+#}
+{% props status = 'neutral', dot = true %}
+{% set badge = html_cva(
+    base: 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset',
+    variants: {
+        status: {
+            neutral: 'bg-slate-800 text-slate-300 ring-slate-700',
+            info: 'bg-sky-950 text-sky-300 ring-sky-800',
+            success: 'bg-emerald-950 text-emerald-300 ring-emerald-800',
+            warning: 'bg-amber-950 text-amber-300 ring-amber-800',
+            danger: 'bg-red-950 text-red-300 ring-red-800',
+        },
+    },
+) %}
+{% set classes = badge.apply({status: status}, attributes.render('class')) %}
+<span class="{{ classes }}" {{ attributes }}>
+    {% if dot %}<span class="size-1.5 rounded-full bg-current" aria-hidden="true"></span>{% endif %}
+    {% block content %}{% endblock %}
+</span>

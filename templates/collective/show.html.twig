@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ collective ? collective.name : 'Collectif' }}{% endblock %}
+
+{% block body %}
+    {% if collective is null %}
+        <twig:EmptyState title="Aucun collectif" description="Vous n'êtes membre d'aucun collectif pour le moment." />
+    {% else %}
+        <p class="text-sm text-slate-400">Collectif actif</p>
+        <h1 class="text-2xl font-bold sm:text-3xl">{{ collective.name }}</h1>
+
+        <div class="mt-8 flex flex-col gap-6">
+            <twig:Card title="Membres" description="{{ memberships|length }} membre{{ memberships|length > 1 ? 's' }}">
+                <ul class="-my-2 divide-y divide-slate-800">
+                    {% for membership in memberships %}
+                        <li class="flex items-center justify-between gap-3 py-3">
+                            <div class="min-w-0">
+                                <p class="truncate font-medium">{{ membership.user.displayName }}</p>
+                                <p class="truncate text-sm text-slate-400">{{ membership.user.email }}</p>
+                            </div>
+                            <twig:Badge status="{{ {admin: 'info', member: 'success', reader: 'neutral'}[membership.role.value] }}" :dot="false">
+                                {{ membership.role.label }}
+                            </twig:Badge>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <twig:block name="footer">
+                    {% if can_manage %}
+                        <twig:Button href="{{ path('app_invitation_new') }}" size="sm">Inviter un membre</twig:Button>
+                    {% endif %}
+                </twig:block>
+            </twig:Card>
+
+            {% if can_manage and invitations is not empty %}
+                <twig:Card title="Invitations en attente">
+                    <ul class="-my-2 divide-y divide-slate-800" id="invitations">
+                        {% for invitation in invitations %}
+                            <li class="flex items-center justify-between gap-3 py-3">
+                                <div class="min-w-0">
+                                    <p class="truncate font-medium">{{ invitation.email }}</p>
+                                    <p class="text-sm text-slate-400">{{ invitation.role.label }} · expire le {{ invitation.expiresAt|date('d/m', 'Europe/Paris') }}</p>
+                                </div>
+                                <form method="post" action="{{ path('app_invitation_cancel', {id: invitation.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('cancel-invitation') }}">
+                                    <twig:Button type="submit" variant="ghost" size="sm" aria-label="Annuler l'invitation de {{ invitation.email }}">Annuler</twig:Button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </twig:Card>
+            {% endif %}
+
+            {% if choices|length > 1 %}
+                <twig:Card title="Changer de collectif">
+                    <form method="post" action="{{ path('app_collective_switch') }}" class="flex flex-col gap-4">
+                        <input type="hidden" name="_token" value="{{ csrf_token('switch-collective') }}">
+                        <fieldset class="flex flex-col gap-2">
+                            <legend class="sr-only">Collectif</legend>
+                            {% for choice in choices %}
+                                <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-slate-700 px-3 has-checked:border-indigo-500 has-checked:bg-indigo-950/40">
+                                    <input type="radio" name="collective" value="{{ choice.id }}" class="size-5 accent-indigo-500" {{ choice.id == collective.id ? 'checked' }}>
+                                    <span class="flex-1">{{ choice.name }}</span>
+                                    <span class="text-xs text-slate-400">{{ choice.role.label }}</span>
+                                </label>
+                            {% endfor %}
+                        </fieldset>
+                        <twig:Button type="submit" variant="secondary" block>Activer ce collectif</twig:Button>
+                    </form>
+                </twig:Card>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{{ path('app_logout') }}" class="mt-8">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}" data-controller="csrf-protection">
+        <twig:Button type="submit" variant="ghost" block>Se déconnecter</twig:Button>
+    </form>
+{% endblock %}

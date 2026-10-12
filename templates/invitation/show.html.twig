@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Invitation : {{ invitation.collective.name }}{% endblock %}
+
+{% block body %}
+    <p class="text-sm text-slate-400">Invitation</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ invitation.collective.name }}</h1>
+
+    <twig:Card class="mt-6">
+        <p class="text-slate-300">
+            {% if invitation.invitedBy %}<strong class="text-slate-100">{{ invitation.invitedBy.displayName }}</strong> vous invite{% else %}Vous êtes invité·e{% endif %}
+            à rejoindre ce collectif en tant que
+            <twig:Badge status="info" :dot="false">{{ invitation.role.label }}</twig:Badge>.
+        </p>
+        <p class="mt-2 text-sm text-slate-400">Invitation pour {{ invitation.email }}.</p>
+
+        {% if other_account %}
+            <div role="alert" class="mt-6 rounded-lg border border-amber-700 bg-amber-950 px-4 py-3 text-sm text-amber-100">
+                Vous êtes connecté·e en tant que {{ app.user.email }}. Déconnectez-vous pour accepter cette invitation avec {{ invitation.email }}.
+            </div>
+        {% else %}
+            <form method="post" class="mt-6">
+                <input type="hidden" name="_token" value="{{ csrf_token('accept-invitation') }}">
+                <twig:Button type="submit" size="lg" block>Rejoindre {{ invitation.collective.name }}</twig:Button>
+            </form>
+            {% if not app.user %}
+                <p class="mt-3 text-center text-xs text-slate-500">Votre compte sera créé si besoin, et vous resterez connecté·e 30 jours.</p>
+            {% endif %}
+        {% endif %}
+    </twig:Card>
+{% endblock %}

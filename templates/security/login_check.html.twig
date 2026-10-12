@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block body %}
+    <h1 class="text-2xl font-bold sm:text-3xl">Se connecter</h1>
+    <p class="mt-2 text-slate-400">Confirmez pour ouvrir votre session sur cet appareil. Vous resterez connecté 30 jours.</p>
+
+    {# Same URL, query string included: the login_link authenticator handles the POST. #}
+    <form method="post" action="{{ app.request.uri }}" class="mt-6">
+        <twig:Button type="submit" size="lg" block>Me connecter</twig:Button>
+    </form>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block body %}
+    <h1 class="text-2xl font-bold sm:text-3xl">Connexion</h1>
+    <p class="mt-2 text-slate-400">Saisissez votre adresse e-mail, nous vous envoyons un lien pour vous connecter. Pas de mot de passe à retenir.</p>
+
+    {% if error|default(null) %}
+        <div role="alert" class="mt-6 rounded-lg border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-100">
+            Ce lien de connexion est invalide, expiré ou a déjà servi. Demandez-en un nouveau.
+        </div>
+    {% endif %}
+
+    <twig:Card class="mt-6">
+        {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-5'}}) }}
+            <twig:Field :field="form.email" placeholder="vous@exemple.fr" />
+            <twig:Button type="submit" size="lg" block>Recevoir mon lien</twig:Button>
+        {{ form_end(form) }}
+    </twig:Card>
+{% endblock %}
