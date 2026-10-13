@@ -1,0 +1,7 @@
+{# One row of the bilan: libellé, forecast, actual and difference. Expects "libelle", "prevu", "reel", "ecart" (null when unknown). #}
+<tr class="border-t border-slate-800">
+    <th scope="row" class="py-2 pr-3 text-left font-normal">{{ libelle }}</th>
+    <td class="py-2 pr-3 text-right tabular-nums">{{ prevu|euros }}</td>
+    <td class="py-2 pr-3 text-right tabular-nums">{{ reel|euros }}</td>
+    <td class="py-2 text-right tabular-nums {{ ecart is null ? 'text-slate-500' : (ecart < 0 ? 'text-red-300' : 'text-emerald-300') }}">{{ ecart is null ? '—' : ecart|euros }}</td>
+</tr>

@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bilan · {{ soiree.nom }}{% endblock %}
+
+{% block body %}
+    <p class="text-sm text-slate-400">Bilan · {{ soiree.date|date('d/m/Y') }} · {{ soiree.statutEnum.label }}</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+
+    {% set t = bilan.totaux %}
+    <div class="mt-6 flex flex-col gap-4">
+        <twig:Card title="Bilan financier" description="Réel contre prévu, recalculé depuis le budget. L'effet sur le solde ne compte que les lignes dont le réel est connu.">
+            <table class="w-full text-sm" id="bilan">
+                <thead class="text-xs text-slate-400">
+                    <tr><th class="pb-2 text-left font-normal">Poste</th><th class="pb-2 text-right font-normal">Prévu</th><th class="pb-2 text-right font-normal">Réel</th><th class="pb-2 text-right font-normal">Effet sur le solde</th></tr>
+                </thead>
+                <tbody>
+                    {% for c in bilan.categories %}
+                        {% set totaux = c.totaux %}
+                        {% if c.type.value == 'depense' %}
+                            {{ include('bilan/_ligne.html.twig', {libelle: c.type.label ~ ' · ' ~ c.categorie.label, prevu: totaux.depensesPrevues, reel: totaux.depensesReelles, ecart: totaux.lignesSansReel < c.lignes ? -totaux.ecartDepenses : null}) }}
+                        {% else %}
+                            {{ include('bilan/_ligne.html.twig', {libelle: c.type.label ~ ' · ' ~ c.categorie.label, prevu: totaux.recettesPrevues, reel: totaux.recettesReelles, ecart: totaux.lignesSansReel < c.lignes ? totaux.ecartRecettes : null}) }}
+                        {% endif %}
+                    {% endfor %}
+                    {% for e in t.estimations %}
+                        {{ include('bilan/_ligne.html.twig', {libelle: e.taux.libelle ~ ' (estimé, ' ~ e.taux.pourcentage ~ ')', prevu: e.prevu, reel: e.reel, ecart: null}) }}
+                    {% endfor %}
+                </tbody>
+                <tfoot class="font-semibold">
+                    {{ include('bilan/_ligne.html.twig', {libelle: 'Dépenses', prevu: t.depensesPrevues, reel: t.depensesReelles, ecart: null}) }}
+                    {{ include('bilan/_ligne.html.twig', {libelle: 'Recettes', prevu: t.recettesPrevues, reel: t.recettesReelles, ecart: null}) }}
+                    {{ include('bilan/_ligne.html.twig', {libelle: 'Solde', prevu: t.soldePrevu, reel: t.soldeReel, ecart: t.ecartRecettes - t.ecartDepenses}) }}
+                </tfoot>
+            </table>
+            {% if t.lignesSansReel > 0 %}
+                <p class="mt-3"><twig:Led statut="attention" libelle="{{ t.lignesSansReel }} montant{{ t.lignesSansReel > 1 ? 's' }} réel{{ t.lignesSansReel > 1 ? 's' }} encore inconnu{{ t.lignesSansReel > 1 ? 's' }}" /></p>
+            {% endif %}
+            <twig:block name="footer">
+                <twig:Button href="{{ path('app_budget', {id: soiree.id}) }}" variant="secondary" size="sm">Modifier le budget</twig:Button>
+            </twig:block>
+        </twig:Card>
+
+        <twig:Card title="Débriefing" description="Un texte par membre." id="debriefings">
+            <ul class="-my-2 divide-y divide-slate-800">
+                {% for d in debriefings %}
+                    <li class="py-3">
+                        <p class="text-sm font-medium">{{ d.auteur.displayName }} <span class="font-normal text-slate-400">· {{ d.modifieLe|date('d/m/Y H:i') }}</span></p>
+                        <p class="mt-1 whitespace-pre-line text-slate-300">{{ d.texte }}</p>
+                    </li>
+                {% else %}
+                    <li class="py-3 text-slate-500">Aucun débriefing pour l'instant.</li>
+                {% endfor %}
+            </ul>
+            {% if peut_debriefer %}
+                <form method="post" action="{{ path('app_bilan_debriefing', {id: soiree.id}) }}" class="mt-4 flex flex-col gap-2 border-t border-slate-800 pt-4">
+                    <input type="hidden" name="_token" value="{{ csrf_token('debriefing') }}">
+                    <label for="debriefing-texte" class="text-sm font-medium">Mon débriefing</label>
+                    <textarea id="debriefing-texte" name="texte" rows="5" maxlength="5000" required class="rounded-lg border border-slate-700 bg-slate-950 p-3 text-sm">{{ mon_debriefing ? mon_debriefing.texte }}</textarea>
+                    <div><twig:Button type="submit" size="sm">Enregistrer</twig:Button></div>
+                </form>
+            {% endif %}
+        </twig:Card>
+
+        <twig:Card title="Clôture" id="cloture">
+            {% if soiree.statut == 'bilan_fait' %}
+                <twig:Led statut="ok" libelle="Bilan fait" />
+            {% elseif taches_ouvertes is not empty %}
+                {% for bloqueur in taches_ouvertes %}
+                    <twig:Led statut="bloquant" libelle="{{ bloqueur.message }}" />
+                {% endfor %}
+                <p class="mt-2 text-sm text-slate-400">Cochez-les dans les <a href="{{ path('app_retroplanning', {id: soiree.id}) }}" class="text-indigo-400 underline">démarches</a> pour pouvoir clore le bilan.</p>
+            {% elseif peut_faire_bilan %}
+                <form method="post" action="{{ path('app_bilan_faire', {id: soiree.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('faire-bilan') }}">
+                    <twig:Button type="submit" size="sm">Marquer le bilan comme fait</twig:Button>
+                </form>
+            {% else %}
+                <p class="text-sm text-slate-400">Le bilan se clôt par un administrateur, une fois la soirée terminée.</p>
+            {% endif %}
+        </twig:Card>
+    </div>
+{% endblock %}

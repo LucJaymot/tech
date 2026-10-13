@@ -51,11 +51,17 @@
                                     {% endif %}
                                     {% if can_view_budget %}
                                         <twig:Button href="{{ path('app_budget', {id: soiree.id}) }}" variant="secondary" size="sm">Budget</twig:Button>
+                                        <twig:Button href="{{ path('app_bilan', {id: soiree.id}) }}" variant="secondary" size="sm">Bilan</twig:Button>
                                     {% endif %}
                                 </div>
                             </li>
                         {% endfor %}
                     </ul>
+                    <twig:block name="footer">
+                        {% if can_view_budget %}
+                            <twig:Button href="{{ path('app_bilan_annuel', {annee: 'now'|date('Y')}) }}" variant="secondary" size="sm">Bilan annuel</twig:Button>
+                        {% endif %}
+                    </twig:block>
                 </twig:Card>
             {% endif %}
 

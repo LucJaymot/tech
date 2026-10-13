@@ -3,8 +3,11 @@
 namespace App\Tests\Soiree;
 
 use App\Entity\Soiree;
+use App\EventListener\BilanBloqueListener;
 use App\Repository\SoireeRepository;
+use App\Repository\TacheAdminRepository;
 use App\Tests\Support\ActsAsMember;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Workflow\WorkflowInterface;
 
@@ -27,6 +30,7 @@ final class SoireeWorkflowTest extends KernelTestCase
         $soiree = $this->soiree();
         self::assertSame('preparation', $soiree->getStatut());
 
+        $this->cocherLesTachesApresSoiree($soiree);
         foreach (['confirmer' => 'confirmee', 'terminer' => 'terminee', 'faire_bilan' => 'bilan_fait'] as $transition => $statut) {
             self::assertSame([$transition], $this->enabledTransitions($soiree));
             $this->workflow()->apply($soiree, $transition);
@@ -34,6 +38,23 @@ final class SoireeWorkflowTest extends KernelTestCase
         }
 
         self::assertSame([], $this->enabledTransitions($soiree));
+    }
+
+    public function testBilanWaitsForTheTasksDueAfterTheSoiree(): void
+    {
+        $this->actAs('camille@example.com');
+        $soiree = $this->soiree();
+        $this->workflow()->apply($soiree, 'confirmer');
+        $this->workflow()->apply($soiree, 'terminer');
+
+        $blockers = iterator_to_array($this->workflow()->buildTransitionBlockerList($soiree, 'faire_bilan'));
+        self::assertCount(1, $blockers);
+        self::assertSame(BilanBloqueListener::CODE, $blockers[0]->getCode());
+        self::assertSame('Démarche encore ouverte : Faire la déclaration unique et simplifiée (Guso) et payer les cotisations.', $blockers[0]->getMessage());
+
+        // Tasks due before the soirée do not block it.
+        $this->cocherLesTachesApresSoiree($soiree);
+        self::assertTrue($this->workflow()->can($soiree, 'faire_bilan'));
     }
 
     public function testStatusesCannotBeSkipped(): void
@@ -105,6 +126,14 @@ final class SoireeWorkflowTest extends KernelTestCase
     private function enabledTransitions(Soiree $soiree): array
     {
         return array_values(array_map(static fn ($transition): string => $transition->getName(), $this->workflow()->getEnabledTransitions($soiree)));
+    }
+
+    private function cocherLesTachesApresSoiree(Soiree $soiree): void
+    {
+        foreach (static::getContainer()->get(TacheAdminRepository::class)->findApresSoireeOuvertes($soiree) as $tache) {
+            $tache->cocher(new \DateTimeImmutable());
+        }
+        static::getContainer()->get(EntityManagerInterface::class)->flush();
     }
 
     private function workflow(): WorkflowInterface

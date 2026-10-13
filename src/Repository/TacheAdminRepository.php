@@ -27,6 +27,24 @@ class TacheAdminRepository extends ServiceEntityRepository
     }
 
     /**
+     * Tasks due after the soirée (e.g. the Guso declaration) not done yet.
+     *
+     * @return list<TacheAdmin> by due date
+     */
+    public function findApresSoireeOuvertes(Soiree $soiree): array
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.soiree = :soiree')
+            ->andWhere('t.faiteLe IS NULL')
+            ->andWhere('t.echeance > :date')
+            ->setParameter('soiree', $soiree)
+            ->setParameter('date', $soiree->getDate(), Types::DATE_IMMUTABLE)
+            ->orderBy('t.echeance', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Tasks not done yet whose due date is one of $echeances.
      *
      * @param list<\DateTimeImmutable> $echeances

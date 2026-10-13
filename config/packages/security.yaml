@@ -55,7 +55,7 @@ security:
     access_control:
         # Checked before the controller: anonymous visitors are sent to the login
         # page instead of getting a 404 from the collective filter.
-        - { path: ^/(soirees|budget|planning|guest-lists)/, roles: ROLE_USER }
+        - { path: ^/(soirees|budget|planning|guest-lists|bilan)/, roles: ROLE_USER }
 
 when@test:
     security:
