@@ -8,6 +8,7 @@ use App\Entity\Poste;
 use App\Entity\Soiree;
 use App\Obligations\Obligations;
 use App\Planning\Horaires;
+use App\Repository\PassageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -18,26 +19,14 @@ final class FeuilleDeRoute
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly PassageRepository $passages,
         private readonly Obligations $obligations,
     ) {
     }
 
     public function pour(Soiree $soiree): VueFeuilleDeRoute
     {
-        /** @var list<Passage> $passages */
-        $passages = $this->entityManager->createQueryBuilder()
-            ->select('p', 'b', 'a', 'lb')
-            ->from(Passage::class, 'p')
-            ->leftJoin('p.bookings', 'b')
-            ->leftJoin('b.artiste', 'a')
-            // Inverse side of a one-to-one: Doctrine would load it booking by booking.
-            ->leftJoin('b.ligneBudget', 'lb')
-            ->where('p.soiree = :soiree')
-            ->setParameter('soiree', $soiree)
-            ->orderBy('p.debut')
-            ->addOrderBy('b.id')
-            ->getQuery()
-            ->getResult();
+        $passages = $this->passages->findTimetable($soiree);
 
         /** @var list<Poste> $postes */
         $postes = $this->entityManager->createQueryBuilder()

@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Visuels · {{ soiree.nom }}{% endblock %}
+
+{% block body %}
+    <p class="text-sm text-slate-400">Visuels et partage · {{ soiree.date|date('d/m/Y') }}</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+
+    <div class="mt-6 flex flex-col gap-4">
+        <twig:Card title="Visuels du line-up" description="Aux couleurs et avec le logo du collectif. À regénérer après un changement de programmation.">
+            <div class="grid grid-cols-2 gap-4" id="visuels">
+                {% for format in formats %}
+                    {% set genere = generes[format.value] %}
+                    <figure>
+                        {% if genere %}
+                            {% set src = path('app_soiree_publique_visuel', {slug: soiree.slug, format: format.value, v: genere}) %}
+                            <a href="{{ src }}" download="{{ soiree.slug }}-{{ format.value }}.svg" data-turbo="false">
+                                <img src="{{ src }}" alt="Visuel {{ format.libelle }}" width="{{ format.largeur }}" height="{{ format.hauteur }}" class="h-auto w-full rounded-lg border border-slate-800">
+                            </a>
+                        {% else %}
+                            <div class="flex aspect-square items-center justify-center rounded-lg border border-dashed border-slate-700 text-sm text-slate-500">Pas encore généré</div>
+                        {% endif %}
+                        <figcaption class="mt-2 text-sm text-slate-400">{{ format.libelle }}{% if genere %} · <a href="{{ src }}" download="{{ soiree.slug }}-{{ format.value }}.svg" data-turbo="false" class="text-indigo-400 underline">Télécharger</a>{% endif %}</figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+            <twig:block name="footer">
+                <form method="post" action="{{ path('app_visuels_generer', {id: soiree.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('visuels') }}">
+                    <twig:Button type="submit" size="sm">{{ generes|filter(g => g)|length ? 'Regénérer' : 'Générer' }} les visuels</twig:Button>
+                </form>
+            </twig:block>
+        </twig:Card>
+
+        <twig:Card title="Page publique" description="Sans connexion : nom, date, lieu et line-up seulement.">
+            {% set publique = url('app_soiree_publique', {slug: soiree.slug}) %}
+            <p class="break-all text-sm"><a href="{{ publique }}" class="text-indigo-400 underline" id="lien-public">{{ publique }}</a></p>
+            <div class="mt-3">{{ include('_partials/partage_whatsapp.html.twig') }}</div>
+        </twig:Card>
+    </div>
+{% endblock %}

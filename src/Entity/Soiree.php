@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -21,6 +22,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  */
 #[ORM\Entity(repositoryClass: SoireeRepository::class)]
 #[ORM\Index(name: 'IDX_SOIREE_COLLECTIVE_DATE', fields: ['collective', 'date'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_SOIREE_SLUG', fields: ['slug'])]
 #[PassagesSansChevauchement]
 class Soiree implements CollectiveScopedInterface
 {
@@ -37,6 +39,13 @@ class Soiree implements CollectiveScopedInterface
     #[Assert\NotBlank]
     #[Assert\Length(max: 120)]
     private string $nom;
+
+    /**
+     * Identifies the public page. Set once from the name with a random suffix,
+     * so that renaming keeps shared links working and soirées cannot be listed.
+     */
+    #[ORM\Column(length: 80)]
+    private string $slug;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $date;
@@ -101,6 +110,8 @@ class Soiree implements CollectiveScopedInterface
     {
         $this->collective = $collective;
         $this->nom = $nom;
+        $base = (string) (new AsciiSlugger('fr'))->slug($nom)->lower()->truncate(60)->trimEnd('-');
+        $this->slug = ('' === $base ? 'soiree' : $base).'-'.bin2hex(random_bytes(4));
         $this->date = $date->setTime(0, 0);
         $this->ouverture = $ouverture;
         $this->fermeture = $fermeture;
@@ -151,6 +162,11 @@ class Soiree implements CollectiveScopedInterface
         $this->nom = $nom;
 
         return $this;
+    }
+
+    public function getSlug(): string
+    {
+        return $this->slug;
     }
 
     public function getDate(): \DateTimeImmutable

@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ vue.soiree }} · {{ vue.collectif }}{% endblock %}
+
+{% block meta %}
+    {% set description = vue.date|date('d/m/Y') ~ ', ouverture ' ~ vue.ouverture|date('H:i') ~ (vue.lieu ? ' · ' ~ vue.lieu) %}
+    <meta name="description" content="{{ description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ vue.soiree }} · {{ vue.collectif }}">
+    <meta property="og:description" content="{{ description }}">
+    <meta property="og:url" content="{{ url('app_soiree_publique', {slug: vue.slug}) }}">
+    <meta property="og:locale" content="fr_FR">
+    {% if vue.visuelGenereLe %}
+        <meta property="og:image" content="{{ url('app_soiree_publique_visuel', {slug: vue.slug, format: 'carre', v: vue.visuelGenereLe}) }}">
+        <meta property="og:image:type" content="image/svg+xml">
+        <meta property="og:image:width" content="1080">
+        <meta property="og:image:height" content="1080">
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    <p class="text-sm text-slate-400">{{ vue.collectif }}</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ vue.soiree }}</h1>
+    <p class="mt-1 text-slate-300">{{ vue.date|date('d/m/Y') }} · ouverture {{ vue.ouverture|date('H:i') }}, fermeture {{ vue.fermeture|date('H:i') }}</p>
+
+    {% if vue.visuelGenereLe %}
+        <img src="{{ path('app_soiree_publique_visuel', {slug: vue.slug, format: 'carre', v: vue.visuelGenereLe}) }}" alt="Line-up de {{ vue.soiree }}" width="1080" height="1080" class="mt-6 h-auto w-full rounded-xl">
+    {% endif %}
+
+    <div class="mt-6 flex flex-col gap-4">
+        {% if vue.lieu %}
+            <twig:Card title="Lieu" id="lieu">
+                <p class="font-medium">{{ vue.lieu }}</p>
+                <p class="mt-1 whitespace-pre-line text-slate-300">{{ vue.adresse }}</p>
+            </twig:Card>
+        {% endif %}
+
+        {% if vue.timetable is not empty %}
+            <twig:Card title="Line-up">
+                <ul class="-my-2 divide-y divide-slate-800" id="timetable">
+                    {% for passage in vue.timetable %}
+                        <li class="flex gap-4 py-2">
+                            <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ passage.debut|date('H:i') }} – {{ passage.fin|date('H:i') }}</span>
+                            <span>{{ passage.artistes is empty ? 'À annoncer' : passage.artistes|join(' b2b ') }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </twig:Card>
+        {% endif %}
+
+        <div>{{ include('_partials/partage_whatsapp.html.twig') }}</div>
+    </div>
+{% endblock %}

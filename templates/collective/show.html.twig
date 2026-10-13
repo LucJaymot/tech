@@ -47,6 +47,7 @@
                                     {% if can_edit %}
                                         <twig:Button href="{{ path('app_guest_lists', {id: soiree.id}) }}" variant="secondary" size="sm">Invités</twig:Button>
                                         <twig:Button href="{{ path('app_pointage', {id: soiree.id}) }}" variant="secondary" size="sm">Pointage</twig:Button>
+                                        <twig:Button href="{{ path('app_visuels', {id: soiree.id}) }}" variant="secondary" size="sm">Visuels</twig:Button>
                                     {% endif %}
                                     {% if can_view_budget %}
                                         <twig:Button href="{{ path('app_budget', {id: soiree.id}) }}" variant="secondary" size="sm">Budget</twig:Button>
@@ -55,6 +56,23 @@
                             </li>
                         {% endfor %}
                     </ul>
+                </twig:Card>
+            {% endif %}
+
+            {% if can_manage %}
+                <twig:Card title="Identité visuelle" description="Couleur d'accent et logo des visuels de line-up." id="identite">
+                    <form method="post" action="{{ path('app_collective_identite') }}" enctype="multipart/form-data" data-turbo="false" class="flex flex-col gap-4">
+                        <input type="hidden" name="_token" value="{{ csrf_token('identite') }}">
+                        <label class="flex items-center gap-3 text-sm">
+                            <input type="color" name="couleur" value="{{ collective.couleurAccent }}" class="h-10 w-14 rounded border border-slate-700 bg-slate-900">
+                            Couleur d'accent
+                        </label>
+                        <label class="flex flex-col gap-1 text-sm">
+                            Logo (PNG ou JPEG, 1 Mo au plus){{ collective.logo ? ' · un logo est déjà enregistré' }}
+                            <input type="file" name="logo" accept="image/png,image/jpeg" class="text-slate-300">
+                        </label>
+                        <div><twig:Button type="submit" size="sm">Enregistrer</twig:Button></div>
+                    </form>
                 </twig:Card>
             {% endif %}
 

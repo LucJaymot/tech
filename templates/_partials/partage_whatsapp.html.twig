@@ -1,0 +1,3 @@
+{# Share link through wa.me with a pre-filled message: no WhatsApp API. Expects "vue" (App\Visuel\VuePublique). #}
+{% set message = vue.soiree ~ ' · ' ~ vue.date|date('d/m/Y') ~ ', ouverture ' ~ vue.ouverture|date('H:i') ~ (vue.lieu ? ' · ' ~ vue.lieu) ~ "\n" ~ url('app_soiree_publique', {slug: vue.slug}) %}
+<twig:Button href="https://wa.me/?text={{ message|url_encode }}" variant="secondary" rel="noopener noreferrer" target="_blank" id="partage-whatsapp">Partager sur WhatsApp</twig:Button>

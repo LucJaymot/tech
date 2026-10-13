@@ -32,6 +32,15 @@ class Collective
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
+    /** Accent colour of its line-up visuals, "#rrggbb". */
+    #[ORM\Column(length: 7, options: ['default' => '#6366f1'])]
+    #[Assert\Regex('/^#[0-9a-f]{6}$/', message: 'Choisissez une couleur au format #rrggbb.')]
+    private string $couleurAccent = '#6366f1';
+
+    /** Key of its PNG or JPEG logo in the "visuels" storage, managed by App\Visuel\IdentiteVisuelle. */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $logo = null;
+
     /**
      * @var Collection<int, Membership>
      */
@@ -78,6 +87,30 @@ class Collective
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getCouleurAccent(): string
+    {
+        return $this->couleurAccent;
+    }
+
+    public function setCouleurAccent(string $couleurAccent): static
+    {
+        $this->couleurAccent = mb_strtolower($couleurAccent);
+
+        return $this;
+    }
+
+    public function getLogo(): ?string
+    {
+        return $this->logo;
+    }
+
+    public function setLogo(?string $logo): static
+    {
+        $this->logo = $logo;
+
+        return $this;
     }
 
     /**

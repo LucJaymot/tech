@@ -1,6 +1,7 @@
 # Read the documentation at https://github.com/thephpleague/flysystem-bundle/blob/master/docs/1-getting-started.md
 
-# Soirée attachments (App\Soiree\PiecesJointes) and budget receipts (App\Budget\Justificatifs).
+# Soirée attachments (App\Soiree\PiecesJointes), budget receipts (App\Budget\Justificatifs),
+# collective logos and line-up visuals (App\Visuel).
 # Local disk in dev and test, S3-compatible object storage hosted in the EU in prod.
 when@dev: &local
     flysystem:
@@ -11,6 +12,9 @@ when@dev: &local
             justificatifs.storage:
                 local:
                     directory: '%kernel.project_dir%/var/storage/%kernel.environment%/justificatifs'
+            visuels.storage:
+                local:
+                    directory: '%kernel.project_dir%/var/storage/%kernel.environment%/visuels'
 
 when@test: *local
 
@@ -37,3 +41,8 @@ when@prod:
                     client: 'app.object_storage.client'
                     bucket: '%env(OBJECT_STORAGE_BUCKET)%'
                     prefix: 'justificatifs'
+            visuels.storage:
+                asyncaws:
+                    client: 'app.object_storage.client'
+                    bucket: '%env(OBJECT_STORAGE_BUCKET)%'
+                    prefix: 'visuels'
