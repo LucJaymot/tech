@@ -146,7 +146,7 @@ class AppFixtures extends Fixture
         $buvetteNuit = new Creneau($buvette, $jour->setTime(22, 0), $jour->modify('+1 day')->setTime(1, 0), 2);
 
         $collective = $soiree->getCollective();
-        $lea = (new Benevole($collective, 'Léa Fontaine'))->setEmail('lea@example.com');
+        $lea = (new Benevole($collective, 'Léa Fontaine'))->setEmail('lea@example.com')->setTelephone('06 12 34 56 78');
         $theo = (new Benevole($collective, 'Théo Lambert'))->setUser($this->theo);
         $sam = new Benevole($collective, 'Sam');
         array_map($manager->persist(...), [$lea, $theo, $sam]);

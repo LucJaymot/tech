@@ -5,7 +5,9 @@ namespace App\Tests\Obligations;
 use App\Entity\Collective;
 use App\Entity\Lieu;
 use App\Entity\Soiree;
+use App\Obligations\CheckSoiree;
 use App\Obligations\Compteur;
+use App\Obligations\Conditions;
 use App\Obligations\Obligations;
 use App\Obligations\Regle;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,7 +30,8 @@ final class ReglesTest extends TestCase
             array_map(static fn (Regle $r): string => $r->code, $obligations->regles()),
         );
         self::assertSame(['representations', 'buvettes', 'manifestations_soutien'], array_map(static fn ($s): string => $s->code, $obligations->seuils()));
-        foreach ([...$obligations->regles(), ...$obligations->seuils()] as $regle) {
+        self::assertSame(['releve_sonore', 'protections_auditives'], array_map(static fn (CheckSoiree $c): string => $c->code, $obligations->checks()));
+        foreach ([...$obligations->regles(), ...$obligations->seuils(), ...$obligations->checks()] as $regle) {
             self::assertStringStartsWith('https://', $regle->source);
         }
     }
@@ -128,11 +131,30 @@ final class ReglesTest extends TestCase
         self::assertSame($statut, (new Compteur($seuil, 2026, $nombre))->statut());
     }
 
+    /**
+     * @return iterable<string, array{?int, list<string>}>
+     */
+    public static function checksDeLaNuit(): iterable
+    {
+        yield '300 people' => [300, ['protections_auditives']];
+        yield '301 people: sound level recording' => [301, ['releve_sonore', 'protections_auditives']];
+        yield 'unknown jauge' => [null, ['protections_auditives']];
+    }
+
+    /**
+     * @param list<string> $codes
+     */
+    #[DataProvider('checksDeLaNuit')]
+    public function testChecksOfTheNight(?int $jauge, array $codes): void
+    {
+        self::assertSame($codes, array_map(static fn (CheckSoiree $c): string => $c->code, self::obligations()->checksPour(self::soiree(jauge: $jauge))));
+    }
+
     public function testUnknownConditionIsRejected(): void
     {
         $this->expectExceptionMessage('Unknown condition(s) "jauge_sup"');
 
-        new Regle('x', 'X', ['jauge_sup' => 500], -30, 'https://example.com', new \DateTimeImmutable());
+        new Conditions(['jauge_sup' => 500], 'x');
     }
 
     private static function echeance(string $code, Soiree $soiree): ?string
@@ -160,6 +182,6 @@ final class ReglesTest extends TestCase
     {
         $parametres = Yaml::parseFile(__DIR__.'/../../config/packages/obligations.yaml')['parameters'];
 
-        return new Obligations($parametres['app.obligations.regles'], $parametres['app.obligations.seuils_annuels']);
+        return new Obligations($parametres['app.obligations.regles'], $parametres['app.obligations.seuils_annuels'], $parametres['app.obligations.checks']);
     }
 }

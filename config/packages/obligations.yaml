@@ -65,3 +65,17 @@ parameters:
             limite: 6
             source: 'https://www.associatheque.fr/fr/fiscalite-des-associations/cas-d-exoneration.html'
             verifiee_le: '2026-10-13'
+
+    # Checks of the night, shown on the soirée's feuille de route. Same
+    # conditions as the rules above.
+    app.obligations.checks:
+        -   code: releve_sonore
+            libelle: 'Afficher et enregistrer en continu les niveaux sonores en dB(A) et dB(C), à conserver 6 mois (plus de 300 personnes)'
+            conditions: {jauge_superieure_a: 300}
+            source: 'https://www.normandie.ars.sante.fr/media/39799/download'
+            verifiee_le: '2026-10-13'
+        -   code: protections_auditives
+            libelle: 'Mettre gratuitement des protections auditives à disposition du public, prévoir une zone de repos auditif'
+            conditions: {}
+            source: 'https://questions.assemblee-nationale.fr/dyn/15/questions/QANR5L15QE3886.pdf'
+            verifiee_le: '2026-10-13'

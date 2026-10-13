@@ -43,6 +43,7 @@
                                 <div class="flex shrink-0 flex-wrap justify-end gap-2">
                                     <twig:Button href="{{ path('app_planning', {id: soiree.id}) }}" variant="secondary" size="sm">Planning</twig:Button>
                                     <twig:Button href="{{ path('app_retroplanning', {id: soiree.id}) }}" variant="secondary" size="sm">Démarches</twig:Button>
+                                    <twig:Button href="{{ path('app_feuille_de_route', {id: soiree.id}) }}" variant="secondary" size="sm">Feuille de route</twig:Button>
                                     {% if can_edit %}
                                         <twig:Button href="{{ path('app_guest_lists', {id: soiree.id}) }}" variant="secondary" size="sm">Invités</twig:Button>
                                         <twig:Button href="{{ path('app_pointage', {id: soiree.id}) }}" variant="secondary" size="sm">Pointage</twig:Button>

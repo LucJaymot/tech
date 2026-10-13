@@ -1,0 +1,35 @@
+/* Printed feuille de route: black on white, without the app's chrome. */
+@page {
+    margin: 1.5cm;
+}
+
+*,
+*::before,
+*::after {
+    background: transparent !important;
+    color: #000 !important;
+    border-color: #000 !important;
+    box-shadow: none !important;
+    text-decoration-color: #000 !important;
+}
+
+html,
+body {
+    background: #fff !important;
+    font-size: 11pt;
+}
+
+body > header,
+body > nav,
+[data-imprimer="non"] {
+    display: none !important;
+}
+
+main {
+    max-width: none !important;
+    padding: 0 !important;
+}
+
+section {
+    break-inside: avoid;
+}

@@ -1,0 +1,99 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Feuille de route · {{ vue.soiree }}{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('styles/print.css') }}" media="print">
+{% endblock %}
+
+{% block body %}
+    <p class="mb-4 hidden rounded-lg border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200 [[data-hors-ligne]_&]:block" data-imprimer="non" role="status">
+        Hors ligne : copie enregistrée le {{ maintenant|date('d/m/Y à H:i') }}, elle peut ne plus être à jour.
+    </p>
+    <p class="text-sm text-slate-400">Feuille de route · {{ vue.ouverture|date('d/m/Y') }}</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ vue.soiree }}</h1>
+    <p class="mt-1 text-slate-300">Ouverture {{ vue.ouverture|date('H:i') }}, fermeture {{ vue.fermeture|date('H:i') }}{% if vue.jauge %} · jauge {{ vue.jauge }}{% endif %}</p>
+    <p class="mt-3 text-lg font-semibold tabular-nums" id="compte-a-rebours" data-imprimer="non"
+       data-controller="compte-a-rebours"
+       data-compte-a-rebours-maintenant-value="{{ maintenant|date('U') }}"
+       data-compte-a-rebours-ouverture-value="{{ vue.ouverture|date('U') }}"
+       data-compte-a-rebours-fermeture-value="{{ vue.fermeture|date('U') }}"></p>
+    <twig:Button variant="secondary" size="sm" class="mt-3" onclick="window.print()" data-imprimer="non">Imprimer</twig:Button>
+
+    <div class="mt-6 flex flex-col gap-4">
+        {% if vue.lieu %}
+            <twig:Card title="Accès" id="acces">
+                <p class="font-medium">{{ vue.lieu }}</p>
+                <p class="mt-1 whitespace-pre-line text-slate-300">{{ vue.adresse }}</p>
+                {% if vue.acces %}<p class="mt-3 text-sm text-slate-300">{{ vue.acces }}</p>{% endif %}
+            </twig:Card>
+        {% endif %}
+
+        <twig:Card title="Timetable">
+            <ul class="-my-2 divide-y divide-slate-800" id="timetable">
+                {% for passage in vue.timetable %}
+                    <li class="flex gap-4 py-2">
+                        <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ passage.debut|date('H:i') }} – {{ passage.fin|date('H:i') }}</span>
+                        <span>{{ passage.artistes is empty ? 'À programmer' : passage.artistes|join(' b2b ') }}</span>
+                    </li>
+                {% else %}
+                    <li class="py-2 text-slate-500">Aucun passage programmé.</li>
+                {% endfor %}
+            </ul>
+        </twig:Card>
+
+        <twig:Card title="Équipe">
+            <div class="flex flex-col gap-4" id="equipe">
+                {% for poste in vue.equipe %}
+                    <section>
+                        <h3 class="font-medium">{{ poste.poste }}</h3>
+                        <ul class="mt-1 flex flex-col gap-1 text-sm">
+                            {% for creneau in poste.creneaux %}
+                                <li class="flex gap-4">
+                                    <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ creneau.debut|date('H:i') }} – {{ creneau.fin|date('H:i') }}</span>
+                                    <span>
+                                        {% for benevole in creneau.benevoles %}
+                                            {{ benevole.nom }}{% if contacts and benevole.telephone %} (<a href="tel:{{ benevole.telephone }}" class="text-indigo-400 underline">{{ benevole.telephone }}</a>){% endif %}{{ not loop.last ? ', ' }}
+                                        {% else %}
+                                            <span class="text-red-300">Personne</span>
+                                        {% endfor %}
+                                    </span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </section>
+                {% else %}
+                    <p class="text-slate-500">Aucun poste.</p>
+                {% endfor %}
+            </div>
+        </twig:Card>
+
+        {% if contacts and vue.artistes is not empty %}
+            <twig:Card title="Contacts artistes">
+                <ul class="-my-2 divide-y divide-slate-800" id="contacts-artistes">
+                    {% for artiste in vue.artistes %}
+                        <li class="py-2">
+                            <p class="font-medium">{{ artiste.nom }}</p>
+                            <p class="text-sm text-slate-300">
+                                {% if artiste.telephone %}<a href="tel:{{ artiste.telephone }}" class="text-indigo-400 underline">{{ artiste.telephone }}</a>{% endif %}
+                                {% if artiste.email %}{{ artiste.telephone ? ' · ' }}<a href="mailto:{{ artiste.email }}" class="text-indigo-400 underline">{{ artiste.email }}</a>{% endif %}
+                                {% if not artiste.telephone and not artiste.email %}<span class="text-slate-500">Pas de coordonnées</span>{% endif %}
+                            </p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </twig:Card>
+        {% endif %}
+
+        <twig:Card title="Checks de la nuit" description="Indicatifs : vérifiés à la date indiquée, à confirmer auprès de l'organisme concerné.">
+            <ul class="-my-2 divide-y divide-slate-800" id="checks">
+                {% for check in vue.checks %}
+                    <li class="py-2">
+                        <p><span aria-hidden="true">☐ </span>{{ check.libelle }}</p>
+                        <p class="mt-1 text-xs text-slate-400"><a href="{{ check.source }}" class="text-indigo-400 underline" rel="noopener noreferrer" target="_blank">Source</a> · vérifiée le {{ check.verifieeLe|date('d/m/Y') }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        </twig:Card>
+    </div>
+{% endblock %}
