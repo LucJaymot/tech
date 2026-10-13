@@ -38,6 +38,7 @@ class Passage implements CollectiveScopedInterface
 
     /** @var Collection<int, Booking> */
     #[ORM\OneToMany(targetEntity: Booking::class, mappedBy: 'passage')]
+    #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $bookings;
 
     public function __construct(Soiree $soiree, \DateTimeImmutable $debut, \DateTimeImmutable $fin)

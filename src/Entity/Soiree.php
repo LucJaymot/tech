@@ -16,8 +16,8 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * A soirée organised by a collective.
  *
  * Its status is driven by the "soiree" workflow: change it through the
- * workflow, never with setStatut(). Changing the date, jauge, lieu or buvette
- * publishes App\Event\SoireeParametresModifies.
+ * workflow, never with setStatut(). Changing the date, jauge, lieu, buvette or
+ * artistesPayes publishes App\Event\SoireeParametresModifies.
  */
 #[ORM\Entity(repositoryClass: SoireeRepository::class)]
 #[ORM\Index(name: 'IDX_SOIREE_COLLECTIVE_DATE', fields: ['collective', 'date'])]
@@ -63,6 +63,10 @@ class Soiree implements CollectiveScopedInterface
 
     #[ORM\Column]
     private bool $artistesPayes = false;
+
+    /** Fundraising event of the collective: counts against the yearly tax-exempt ones. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $soutien = false;
 
     #[ORM\Column(length: 20)]
     private string $statut = SoireeStatut::Preparation->value;
@@ -241,6 +245,18 @@ class Soiree implements CollectiveScopedInterface
     public function setArtistesPayes(bool $artistesPayes): static
     {
         $this->artistesPayes = $artistesPayes;
+
+        return $this;
+    }
+
+    public function isSoutien(): bool
+    {
+        return $this->soutien;
+    }
+
+    public function setSoutien(bool $soutien): static
+    {
+        $this->soutien = $soutien;
 
         return $this;
     }

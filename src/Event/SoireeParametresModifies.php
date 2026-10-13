@@ -5,8 +5,9 @@ namespace App\Event;
 use App\Enum\SoireeParametre;
 
 /**
- * Published once a soirée's date, jauge, lieu or buvette has changed and been
- * saved. The rétroplanning listens to it to reschedule its tasks.
+ * Published once a soirée's date, jauge, lieu, buvette or artistesPayes has
+ * changed and been saved. Also a Messenger message: App\Obligations\RetroplanningGenerator
+ * handles it asynchronously to reschedule the soirée's tasks.
  */
 final readonly class SoireeParametresModifies
 {

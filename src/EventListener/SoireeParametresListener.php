@@ -14,7 +14,7 @@ use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Publishes SoireeParametresModifies for every saved change of a soirée's
- * date, jauge, lieu or buvette, whatever code made it. Events are dispatched
+ * SoireeParametre, whatever code made it. Events are dispatched
  * after the flush, so listeners see the saved data.
  */
 #[AsDoctrineListener(event: Events::postUpdate)]

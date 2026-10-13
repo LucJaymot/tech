@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rétroplanning · {{ soiree.nom }}{% endblock %}
+
+{% block body %}
+    <p class="text-sm text-slate-400">Rétroplanning administratif · {{ soiree.date|date('d/m/Y') }}</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+
+    <p class="mt-4 rounded-lg border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200" id="mention-indicative">
+        Ces démarches sont indicatives : elles viennent de règles générales, vérifiées à la date indiquée sous chacune.
+        Confirmez auprès de la mairie, de la préfecture ou de l'organisme concerné.
+    </p>
+
+    {% set token = csrf_token('retroplanning') %}
+    <div class="mt-6 flex flex-col gap-6">
+        <twig:Card title="Démarches">
+            <ul class="-my-2 divide-y divide-slate-800" id="taches">
+                {% for tache in taches %}
+                    <li id="tache-{{ tache.id }}" class="flex items-start justify-between gap-3 py-3">
+                        <div class="min-w-0">
+                            <p class="font-medium {{ tache.estFaite ? 'text-slate-500 line-through' }}">{{ tache.libelle }}</p>
+                            <p class="mt-1">
+                                {% if tache.estFaite %}
+                                    <twig:Led statut="ok" libelle="Fait le {{ tache.faiteLe|date('d/m/Y') }}" />
+                                {% elseif tache.echeance < aujourdhui %}
+                                    <twig:Led statut="bloquant" libelle="En retard : à faire avant le {{ tache.echeance|date('d/m/Y') }}" />
+                                {% elseif tache.echeance <= aujourdhui|date_modify('+7 days') %}
+                                    <twig:Led statut="attention" libelle="À faire avant le {{ tache.echeance|date('d/m/Y') }}" />
+                                {% else %}
+                                    <twig:Led statut="ok" libelle="À faire avant le {{ tache.echeance|date('d/m/Y') }}" />
+                                {% endif %}
+                            </p>
+                            <p class="mt-1 text-xs text-slate-400">
+                                <a href="{{ tache.source }}" class="text-indigo-400 underline" rel="noopener noreferrer" target="_blank">Source officielle</a>
+                                · vérifiée le {{ tache.verifieeLe|date('d/m/Y') }}
+                            </p>
+                        </div>
+                        {% if peut_modifier %}
+                            <form method="post" action="{{ path('app_retroplanning_cocher', {id: tache.id}) }}" class="shrink-0">
+                                <input type="hidden" name="_token" value="{{ token }}">
+                                <twig:Button type="submit" variant="{{ tache.estFaite ? 'ghost' : 'secondary' }}" size="sm">{{ tache.estFaite ? 'Décocher' : 'Fait' }}</twig:Button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% else %}
+                    <li class="py-3 text-slate-500">Aucune démarche pour l'instant.</li>
+                {% endfor %}
+            </ul>
+        </twig:Card>
+
+        <twig:Card title="Seuils {{ soiree.date|date('Y') }}" description="Comptés sur toutes les soirées du collectif de l'année civile">
+            <ul class="-my-2 divide-y divide-slate-800" id="compteurs">
+                {% for compteur in compteurs %}
+                    <li class="py-3">
+                        <p class="text-sm">{{ compteur.seuil.libelle }}</p>
+                        <p class="mt-1">
+                            {% set libelle = compteur.nombre ~ ' / ' ~ compteur.seuil.limite %}
+                            {% if compteur.statut == 'bloquant' %}
+                                <twig:Led statut="bloquant" libelle="{{ libelle }} : limite dépassée" />
+                            {% elseif compteur.nombre >= compteur.seuil.limite %}
+                                <twig:Led statut="attention" libelle="{{ libelle }} : limite atteinte" />
+                            {% elseif compteur.statut == 'attention' %}
+                                <twig:Led statut="attention" libelle="{{ libelle }} : plus qu'une possible" />
+                            {% else %}
+                                <twig:Led statut="ok" libelle="{{ libelle }}" />
+                            {% endif %}
+                        </p>
+                        <p class="mt-1 text-xs text-slate-400">
+                            <a href="{{ compteur.seuil.source }}" class="text-indigo-400 underline" rel="noopener noreferrer" target="_blank">Source officielle</a>
+                            · vérifiée le {{ compteur.seuil.verifieeLe|date('d/m/Y') }}
+                        </p>
+                    </li>
+                {% endfor %}
+            </ul>
+        </twig:Card>
+    </div>
+{% endblock %}

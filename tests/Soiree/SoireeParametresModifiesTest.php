@@ -41,6 +41,7 @@ final class SoireeParametresModifiesTest extends KernelTestCase
         yield 'date' => [static function (Soiree $s): void { $s->setDate($s->getDate()->modify('+1 day')); }, [SoireeParametre::Date]];
         yield 'jauge' => [static function (Soiree $s): void { $s->setJauge(80); }, [SoireeParametre::Jauge]];
         yield 'buvette' => [static function (Soiree $s): void { $s->setBuvette(false); }, [SoireeParametre::Buvette]];
+        yield 'artistes payés' => [static function (Soiree $s): void { $s->setArtistesPayes(false); }, [SoireeParametre::ArtistesPayes]];
         yield 'lieu' => [static function (Soiree $s, EntityManagerInterface $em): void {
             $lieu = new Lieu($s->getCollective(), 'Parc', 'Allée centrale', 300);
             $em->persist($lieu);
@@ -70,7 +71,7 @@ final class SoireeParametresModifiesTest extends KernelTestCase
     {
         $soiree = $this->soiree();
         $soiree->setNom('Concert d\'été')
-            ->setArtistesPayes(false)
+            ->setSoutien(true)
             ->setOuverture(new \DateTimeImmutable('20:00'))
             // Same day and same values, new objects: not a change.
             ->setDate(new \DateTimeImmutable($soiree->getDate()->format('Y-m-d')))

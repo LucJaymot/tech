@@ -24,6 +24,7 @@ use App\Enum\CategorieBudget;
 use App\Enum\LigneBudgetType;
 use App\Enum\MembershipRole;
 use App\Enum\ModeRemuneration;
+use App\Obligations\RetroplanningGenerator;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -42,6 +43,7 @@ class AppFixtures extends Fixture
 
     public function __construct(
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly RetroplanningGenerator $retroplanning,
     ) {
     }
 
@@ -100,6 +102,12 @@ class AppFixtures extends Fixture
 
         $this->loadSoirees($manager, $collectiveEntities['jardin-des-lilas']);
 
+        $manager->flush();
+
+        // Once saved: the generator looks up the soirées' existing tasks.
+        foreach ($manager->getRepository(Soiree::class)->findAll() as $soiree) {
+            $this->retroplanning->generer($soiree);
+        }
         $manager->flush();
     }
 

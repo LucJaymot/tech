@@ -1,0 +1,16 @@
+<p>Bonjour,</p>
+<p>Les démarches de <strong>{{ collective }}</strong> à faire dans les 30 jours :</p>
+<ul>
+    {% for tache in taches %}
+        <li>{% if tache.echeance < aujourdhui %}<strong style="color:#dc2626;">En retard</strong> · {% endif %}{{ tache.echeance|date('d/m/Y') }} · {{ tache.soiree }} : <a href="{{ tache.url }}">{{ tache.libelle }}</a></li>
+    {% endfor %}
+</ul>
+{% if alertes is not empty %}
+    <p><strong>Seuils annuels</strong></p>
+    <ul>
+        {% for alerte in alertes %}
+            <li>{{ alerte.libelle }} : {{ alerte.nombre }} / {{ alerte.limite }} en {{ alerte.annee }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+<p style="color:#64748b;font-size:13px;">Règles indicatives : chaque démarche indique sa source et sa date de vérification sur le rétroplanning. Confirmez auprès de l'administration concernée.</p>

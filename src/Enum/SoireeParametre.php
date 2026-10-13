@@ -12,4 +12,5 @@ enum SoireeParametre: string
     case Jauge = 'jauge';
     case Lieu = 'lieu';
     case Buvette = 'buvette';
+    case ArtistesPayes = 'artistesPayes';
 }

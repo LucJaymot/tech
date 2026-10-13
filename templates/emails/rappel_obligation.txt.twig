@@ -1,0 +1,9 @@
+Bonjour,
+
+Pour {{ tache.soiree }} : {{ tache.libelle }}, {{ jours == 0 ? 'à faire aujourd\'hui' : 'à faire d\'ici le ' ~ tache.echeance|date('d/m/Y') }}.
+
+Voir le rétroplanning :
+{{ tache.url }}
+
+Règle indicative, source vérifiée le {{ tache.verifiee_le|date('d/m/Y') }} : {{ tache.source }}
+Confirmez auprès de l'administration concernée.

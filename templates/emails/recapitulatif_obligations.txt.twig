@@ -1,0 +1,16 @@
+Bonjour,
+
+Les démarches de {{ collective }} à faire dans les 30 jours :
+{% for tache in taches %}
+- {% if tache.echeance < aujourdhui %}EN RETARD · {% endif %}{{ tache.echeance|date('d/m/Y') }} · {{ tache.soiree }} : {{ tache.libelle }}
+  {{ tache.url }}
+{% endfor %}
+{% if alertes is not empty %}
+
+Seuils annuels :
+{% for alerte in alertes %}
+- {{ alerte.libelle }} : {{ alerte.nombre }} / {{ alerte.limite }} en {{ alerte.annee }}
+{% endfor %}
+{% endif %}
+
+Règles indicatives : chaque démarche indique sa source et sa date de vérification sur le rétroplanning. Confirmez auprès de l'administration concernée.

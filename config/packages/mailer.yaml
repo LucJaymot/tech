@@ -1,5 +1,8 @@
 framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
+        # The Notifier's e-mail channel needs a sender here.
+        envelope:
+            sender: '%env(MAILER_FROM)%'
         headers:
             From: '%env(MAILER_FROM)%'

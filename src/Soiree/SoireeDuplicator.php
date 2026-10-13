@@ -30,7 +30,8 @@ final class SoireeDuplicator
         $copy->setLieu($source->getLieu())
             ->setJauge($source->getJauge())
             ->setBuvette($source->hasBuvette())
-            ->setArtistesPayes($source->hasArtistesPayes());
+            ->setArtistesPayes($source->hasArtistesPayes())
+            ->setSoutien($source->isSoutien());
 
         // Field by field, so that assignments and availabilities are never carried
         // over; créneaux move with the date, keeping their hours.
