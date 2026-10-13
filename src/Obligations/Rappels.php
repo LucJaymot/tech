@@ -54,10 +54,14 @@ final class Rappels
 
         $echeances = array_map(static fn (int $jours): \DateTimeImmutable => $aujourdhui->modify("+$jours days"), self::JOURS_AVANT);
         foreach ($this->taches->findAFaireLe($echeances) as $tache) {
+            $contexte = $this->tache($tache);
+            $jours = (int) $aujourdhui->diff($tache->getEcheance())->days;
             $this->notifier(new NotificationObligations(
                 \sprintf('%s : %s', $tache->getSoiree()->getNom(), $tache->getLibelle()),
                 'rappel_obligation',
-                ['tache' => $this->tache($tache), 'jours' => (int) $aujourdhui->diff($tache->getEcheance())->days],
+                ['tache' => $contexte, 'jours' => $jours],
+                $contexte['url'],
+                0 === $jours ? 'À faire aujourd\'hui.' : \sprintf('À faire d\'ici le %s.', $tache->getEcheance()->format('d/m/Y')),
             ), $tache->getCollective());
         }
     }
@@ -85,6 +89,8 @@ final class Rappels
                     'aujourdhui' => $aujourdhui,
                     'alertes' => array_map(static fn (Compteur $c): array => ['libelle' => $c->seuil->libelle, 'nombre' => $c->nombre, 'limite' => $c->seuil->limite, 'annee' => $c->annee], $alertes),
                 ],
+                $this->urlGenerator->generate('app_collective', [], UrlGeneratorInterface::ABSOLUTE_URL),
+                \sprintf('%d démarche%s à faire dans les 30 jours.', \count($taches), \count($taches) > 1 ? 's' : ''),
             ), $collective);
         }
     }

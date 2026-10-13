@@ -27,7 +27,7 @@ final class ComponentsTest extends KernelTestCase
 
         self::assertSame('submit', $button->attr('type'));
         self::assertSame('x', $button->attr('data-test'));
-        foreach (['bg-indigo-500', 'min-h-11', 'sm:flex-1'] as $class) {
+        foreach (['bg-(--accent)', 'min-h-11', 'sm:flex-1'] as $class) {
             self::assertStringContainsString($class, self::classOf($button));
         }
     }

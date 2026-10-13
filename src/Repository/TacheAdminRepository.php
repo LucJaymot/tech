@@ -60,6 +60,7 @@ class TacheAdminRepository extends ServiceEntityRepository
             ->andWhere('t.echeance IN (:echeances)')
             ->setParameter('echeances', array_map(static fn (\DateTimeImmutable $d): string => $d->format('Y-m-d'), $echeances))
             ->orderBy('t.echeance', 'ASC')
+            ->addOrderBy('t.id', 'ASC')
             ->getQuery()
             ->getResult();
     }

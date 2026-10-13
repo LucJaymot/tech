@@ -1651,6 +1651,414 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     secret?: scalar|Param|null, // The secret used to compute fingerprints and checksums // Default: "%kernel.secret%"
  *     fetch_credentials?: "same-origin"|"include"|"omit"|Param, // The default fetch credentials mode for all Live Components ('same-origin', 'include', 'omit') // Default: "same-origin"
  * }
+ * @psalm-type PwaConfig = array{
+ *     asset_compiler?: bool|Param, // When true, the assets will be compiled when the command "asset-map:compile" is run. // Default: true
+ *     early_hints?: bool|array{ // Early Hints (HTTP 103) configuration. Requires a compatible server (FrankenPHP, Caddy).
+ *         enabled?: bool|Param, // Default: false
+ *         preload_manifest?: bool|Param, // Preload the PWA manifest file. // Default: true
+ *         preload_serviceworker?: bool|Param, // Preload the service worker script. Disabled by default as SW registration is usually deferred. // Default: false
+ *         preconnect_workbox_cdn?: bool|Param, // Preconnect to Workbox CDN when using CDN mode. // Default: true
+ *     },
+ *     favicons?: bool|array{
+ *         enabled?: bool|Param, // Default: false
+ *         default?: array{ // The favicon source and parameters. When used with "dark", this favicon will become the light version.
+ *             src?: scalar|Param|null, // The path to the icon. Can be served by Asset Mapper, an absolute path or a Symfony UX Icon (if the bundle is installed).
+ *             background_color?: scalar|Param|null, // The background color of the application. If this value is not defined and that of the Manifest section is, the value of the latter will be used. // Default: null
+ *             border_radius?: int|Param, // The border radius of the icon. // Default: null
+ *             image_scale?: int|Param, // The scale of the icon. // Default: null
+ *             svg_attr?: array<string, mixed>,
+ *         },
+ *         dark?: array{ // The favicon source and parameters for the dark theme. Should only be used with "default".
+ *             src?: scalar|Param|null, // The path to the icon. Can be served by Asset Mapper, an absolute path or a Symfony UX Icon (if the bundle is installed).
+ *             background_color?: scalar|Param|null, // The background color of the application. If this value is not defined and that of the Manifest section is, the value of the latter will be used. // Default: null
+ *             border_radius?: int|Param, // The border radius of the icon. // Default: null
+ *             image_scale?: int|Param, // The scale of the icon. // Default: null
+ *             svg_attr?: array<string, mixed>,
+ *         },
+ *         src?: scalar|Param|null, // Deprecated: The "src" configuration key is deprecated. Use the "default.src" configuration key instead. // The source of the favicon. Shall be a SVG or large PNG. // Default: null
+ *         src_dark?: scalar|Param|null, // Deprecated: The "src_dark" configuration key is deprecated. Use the "dark.src" configuration key instead. // The source of the favicon in dark mode. Shall be a SVG or large PNG. // Default: null
+ *         background_color?: scalar|Param|null, // Deprecated: The "background_color" configuration key is deprecated. Use the "default.background_color" configuration key instead. // The background color of the icon. // Default: null
+ *         background_color_dark?: scalar|Param|null, // Deprecated: The "background_color_dark" configuration key is deprecated. Use the "dark.background_color" configuration key instead. // The background color of the icon in dark mode. // Default: null
+ *         safari_pinned_tab_color?: scalar|Param|null, // The color of the Safari pinned tab. Requires "use_silhouette" to be set to "true". // Default: null
+ *         tile_color?: scalar|Param|null, // The color of the tile for Windows 8+. // Default: null
+ *         border_radius?: int|Param, // Deprecated: The "border_radius" configuration key is deprecated. Use the "default.border_radius" or "dark.border_radius" configuration key instead. // The border radius of the icon. // Default: null
+ *         image_scale?: int|Param, // Deprecated: The "image_scale" configuration key is deprecated. Use the "default.image_scale" or "dark.image_scale" configuration key instead. // The scale of the icon. // Default: null
+ *         low_resolution?: bool|Param, // Include low resolution icons. // Default: false
+ *         use_silhouette?: bool|Param|null, // Use only the silhouette of the icon. Applicable for macOS Safari and Windows 8+. Requires potrace to be installed. // Default: null
+ *         use_start_image?: bool|Param, // Use the icon as a start image for the iOS splash screen. // Default: true
+ *         svg_color?: scalar|Param|null, // When the asset is a SVG file, replaces the currentColor attribute with this color. // Default: "#000"
+ *         monochrome?: bool|Param, // Use a monochrome icon. // Default: false
+ *         potrace?: scalar|Param|null, // The path to the potrace binary. // Default: "potrace"
+ *         ...<string, mixed>
+ *     },
+ *     image_processor?: scalar|Param|null, // The image processor to use to generate the icons of different sizes. // Default: null
+ *     logger?: scalar|Param|null, // The logger service to use. If not set, the default logger will be used. // Default: null
+ *     manifest?: bool|array{
+ *         enabled?: bool|Param, // Default: false
+ *         public_url?: scalar|Param|null, // The public URL of the manifest file. // Default: "/site.webmanifest"
+ *         use_credentials?: bool|Param, // Indicates whether the manifest should be fetched with credentials. // Default: true
+ *         background_color?: scalar|Param|null, // The background color of the application. It should match the background-color CSS property in the sites stylesheet for a smooth transition between launching the web application and loading the site's content.
+ *         categories?: list<scalar|Param|null>,
+ *         description?: scalar|Param|null, // The description of the application.
+ *         display?: scalar|Param|null, // The display mode of the application.
+ *         display_override?: list<scalar|Param|null>,
+ *         id?: scalar|Param|null, // A string that represents the identity of the web application.
+ *         orientation?: scalar|Param|null, // The orientation of the application.
+ *         dir?: scalar|Param|null, // The direction of the application.
+ *         lang?: scalar|Param|null, // The language of the application.
+ *         name?: scalar|Param|null, // The name of the application.
+ *         short_name?: scalar|Param|null, // The short name of the application.
+ *         scope?: scalar|Param|null, // The scope of the application.
+ *         start_url?: Param|string|array{ // The start URL of the application.
+ *             path?: scalar|Param|null, // The URL or route name.
+ *             path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *             params?: list<mixed>,
+ *         },
+ *         theme_color?: scalar|Param|null, // The theme color of the application. If a dark theme color is specified, the theme color will be used for the light theme.
+ *         dark_theme_color?: scalar|Param|null, // The dark theme color of the application.
+ *         edge_side_panel?: array{ // Specifies whether or not your app supports the side panel view in Microsoft Edge.
+ *             preferred_width?: int|Param, // Specifies the preferred width of the side panel view in Microsoft Edge.
+ *         },
+ *         iarc_rating_id?: scalar|Param|null, // Specifies the International Age Rating Coalition (IARC) rating ID for the app. See https://www.globalratings.com/how-iarc-works.aspx for more information.
+ *         scope_extensions?: list<array{ // Default: []
+ *             type?: scalar|Param|null, // Specifies the type of scope extension. This is currently always origin (default), but future extensions may add other types. // Default: "origin"
+ *             origin?: scalar|Param|null, // Specifies the origin pattern to associate with.
+ *         }>,
+ *         handle_links?: scalar|Param|null, // Specifies the default link handling for the web app.
+ *         note_taking?: array{ // The note-taking capabilities of the application.
+ *             note_taking_url?: Param|string|array{ // The URL to the note-taking service.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *         },
+ *         icons?: list<Param|string|array{ // Default: []
+ *             src?: scalar|Param|null, // The path to the icon. Can be served by Asset Mapper, an absolute path or a Symfony UX Icon (if the bundle is installed).
+ *             sizes?: list<int|Param>,
+ *             background_color?: scalar|Param|null, // The background color of the application. If this value is not defined and that of the Manifest section is, the value of the latter will be used. // Default: null
+ *             border_radius?: int|Param, // The border radius of the icon. // Default: null
+ *             image_scale?: int|Param, // The scale of the icon. // Default: null
+ *             type?: scalar|Param|null, // The icon mime type.
+ *             format?: scalar|Param|null, // The icon format. When set, the "type" option is ignored and the image will be converted.
+ *             purpose?: scalar|Param|null, // The purpose of the icon.
+ *             svg_attr?: array<string, mixed>,
+ *         }>,
+ *         screenshots?: list<Param|string|array{ // Default: []
+ *             src?: scalar|Param|null, // The path to the screenshot. Can be served by Asset Mapper.
+ *             height?: scalar|Param|null, // Default: null
+ *             width?: scalar|Param|null, // Default: null
+ *             form_factor?: scalar|Param|null, // The form factor of the screenshot. Will guess the form factor if not set.
+ *             label?: scalar|Param|null, // The label of the screenshot.
+ *             platform?: scalar|Param|null, // The platform of the screenshot.
+ *             format?: scalar|Param|null, // The format of the screenshot. Will convert the file if set.
+ *             reference?: scalar|Param|null, // The URL of the screenshot. Only for reference and not used by the bundle. // Default: null
+ *         }>,
+ *         file_handlers?: list<array{ // Default: []
+ *             action?: Param|string|array{ // The action to take.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             accept?: array<string, list<scalar|Param|null>>,
+ *         }>,
+ *         launch_handler?: array{ // The launch handler of the application.
+ *             client_mode?: list<scalar|Param|null>,
+ *         },
+ *         protocol_handlers?: list<array{ // Default: []
+ *             protocol?: scalar|Param|null, // The protocol of the handler.
+ *             placeholder?: scalar|Param|null, // The placeholder of the handler. Will be replaced by "xxx=%s". // Default: null
+ *             url?: Param|string|array{ // The URL of the handler.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *         }>,
+ *         prefer_related_applications?: bool|Param, // prefer related native applications (instead of this application) // Default: false
+ *         related_applications?: list<array{ // Default: []
+ *             platform?: scalar|Param|null, // The platform of the application.
+ *             url?: Param|string|array{ // The URL of the application.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             id?: scalar|Param|null, // The ID of the application.
+ *         }>,
+ *         shortcuts?: list<array{ // Default: []
+ *             name?: scalar|Param|null, // The name of the shortcut.
+ *             short_name?: scalar|Param|null, // The short name of the shortcut.
+ *             description?: scalar|Param|null, // The description of the shortcut.
+ *             url?: Param|string|array{ // The URL of the shortcut.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             icons?: list<Param|string|array{ // Default: []
+ *                 src?: scalar|Param|null, // The path to the icon. Can be served by Asset Mapper, an absolute path or a Symfony UX Icon (if the bundle is installed).
+ *                 sizes?: list<int|Param>,
+ *                 background_color?: scalar|Param|null, // The background color of the application. If this value is not defined and that of the Manifest section is, the value of the latter will be used. // Default: null
+ *                 border_radius?: int|Param, // The border radius of the icon. // Default: null
+ *                 image_scale?: int|Param, // The scale of the icon. // Default: null
+ *                 type?: scalar|Param|null, // The icon mime type.
+ *                 format?: scalar|Param|null, // The icon format. When set, the "type" option is ignored and the image will be converted.
+ *                 purpose?: scalar|Param|null, // The purpose of the icon.
+ *                 svg_attr?: array<string, mixed>,
+ *             }>,
+ *             ...<string, mixed>
+ *         }>,
+ *         share_target?: array{ // The share target of the application.
+ *             action?: Param|string|array{ // The action of the share target.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             method?: scalar|Param|null, // The method of the share target.
+ *             enctype?: scalar|Param|null, // The enctype of the share target. Ignored if method is GET.
+ *             params?: array{ // The parameters of the share target.
+ *                 title?: scalar|Param|null, // The title of the share target.
+ *                 text?: scalar|Param|null, // The text of the share target.
+ *                 url?: scalar|Param|null, // The URL of the share target.
+ *                 files?: list<array{ // Default: []
+ *                     name?: scalar|Param|null, // The name of the file parameter.
+ *                     accept?: list<scalar|Param|null>,
+ *                 }>,
+ *             },
+ *         },
+ *         widgets?: list<array{ // Default: []
+ *             name?: scalar|Param|null, // The title of the widget, presented to users.
+ *             short_name?: scalar|Param|null, // An alternative short version of the name.
+ *             description?: scalar|Param|null, // The description of the widget.
+ *             icons?: list<Param|string|array{ // Default: []
+ *                 src?: scalar|Param|null, // The path to the icon. Can be served by Asset Mapper, an absolute path or a Symfony UX Icon (if the bundle is installed).
+ *                 sizes?: list<int|Param>,
+ *                 background_color?: scalar|Param|null, // The background color of the application. If this value is not defined and that of the Manifest section is, the value of the latter will be used. // Default: null
+ *                 border_radius?: int|Param, // The border radius of the icon. // Default: null
+ *                 image_scale?: int|Param, // The scale of the icon. // Default: null
+ *                 type?: scalar|Param|null, // The icon mime type.
+ *                 format?: scalar|Param|null, // The icon format. When set, the "type" option is ignored and the image will be converted.
+ *                 purpose?: scalar|Param|null, // The purpose of the icon.
+ *                 svg_attr?: array<string, mixed>,
+ *             }>,
+ *             screenshots?: list<Param|string|array{ // Default: []
+ *                 src?: scalar|Param|null, // The path to the screenshot. Can be served by Asset Mapper.
+ *                 height?: scalar|Param|null, // Default: null
+ *                 width?: scalar|Param|null, // Default: null
+ *                 form_factor?: scalar|Param|null, // The form factor of the screenshot. Will guess the form factor if not set.
+ *                 label?: scalar|Param|null, // The label of the screenshot.
+ *                 platform?: scalar|Param|null, // The platform of the screenshot.
+ *                 format?: scalar|Param|null, // The format of the screenshot. Will convert the file if set.
+ *                 reference?: scalar|Param|null, // The URL of the screenshot. Only for reference and not used by the bundle. // Default: null
+ *             }>,
+ *             tag?: scalar|Param|null, // A string used to reference the widget in the PWA service worker.
+ *             template?: scalar|Param|null, // The template to use to display the widget in the operating system widgets dashboard. Note: this property is currently only informational and not used. See ms_ac_template below.
+ *             ms_ac_template?: Param|string|array{ // The URL of the custom Adaptive Cards template to use to display the widget in the operating system widgets dashboard.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             data?: Param|string|array{ // The URL where the data to fill the template with can be found. If present, this URL is required to return valid JSON.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             type?: scalar|Param|null, // The MIME type for the widget data.
+ *             auth?: bool|Param, // A boolean indicating if the widget requires authentication.
+ *             update?: int|Param, // The frequency, in seconds, at which the widget will be updated. Code in your service worker must perform the updating; the widget is not updated automatically. See Access widget instances at runtime.
+ *             multiple?: bool|Param, // A boolean indicating whether to allow multiple instances of the widget. Defaults to true. // Default: true
+ *         }>,
+ *         ...<string, mixed>
+ *     },
+ *     path_type_reference?: int|Param, // Deprecated: The "path_type_reference" configuration key is deprecated. Use the "path_type_reference" of URL nodes instead. // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *     resource_hints?: bool|array{ // Resource Hints configuration for preconnect, dns-prefetch, and preload.
+ *         enabled?: bool|Param, // Default: false
+ *         auto_preconnect?: bool|Param, // Automatically add preconnect hints for detected external origins (Workbox CDN, Google Fonts). // Default: true
+ *         preconnect?: list<scalar|Param|null>,
+ *         dns_prefetch?: list<scalar|Param|null>,
+ *         preload?: list<array{ // Default: []
+ *             href?: scalar|Param|null, // The URL or path to preload.
+ *             as?: "script"|"style"|"font"|"image"|"fetch"|"document"|"audio"|"video"|"track"|"worker"|Param, // The resource type.
+ *             type?: scalar|Param|null, // The MIME type of the resource. // Default: null
+ *             crossorigin?: "anonymous"|"use-credentials"|Param, // The crossorigin attribute value. Required for fonts. // Default: null
+ *             fetchpriority?: "high"|"low"|"auto"|Param, // The fetch priority hint. // Default: null
+ *             media?: scalar|Param|null, // Media query for responsive preloading. // Default: null
+ *         }>,
+ *     },
+ *     serviceworker?: Param|bool|string|array{
+ *         enabled?: bool|Param, // Default: false
+ *         src?: scalar|Param|null, // The path to the service worker source file. Can be served by Asset Mapper.
+ *         dest?: scalar|Param|null, // The public URL to the service worker. // Default: "/sw.js"
+ *         skip_waiting?: bool|Param, // Whether to skip waiting for the service worker to be activated. // Default: false
+ *         scope?: scalar|Param|null, // The scope of the service worker. // Default: "/"
+ *         use_cache?: bool|Param, // Whether the service worker should use the cache. // Default: true
+ *         workbox?: bool|array{ // The configuration of the workbox.
+ *             enabled?: bool|Param, // Default: true
+ *             use_cdn?: bool|Param, // Deprecated: The "use_cdn" option is deprecated and will be removed in 2.0.0. use "config.use_cdn" instead. // Whether to use the local workbox or the CDN. // Default: false
+ *             google_fonts?: bool|array{
+ *                 enabled?: bool|Param, // Default: true
+ *                 cache_prefix?: scalar|Param|null, // The cache prefix for the Google fonts. // Default: null
+ *                 max_age?: scalar|Param|null, // The maximum age of the Google fonts cache (in seconds). // Default: null
+ *                 max_entries?: int|Param, // The maximum number of entries in the Google fonts cache. // Default: null
+ *             },
+ *             cache_manifest?: bool|Param, // Whether to cache the manifest file. // Default: true
+ *             version?: scalar|Param|null, // Deprecated: The "version" option is deprecated and will be removed in 2.0.0. use "config.version" instead. // The version of workbox. When using local files, the version shall be "7.0.0." // Default: "7.3.0"
+ *             workbox_public_url?: scalar|Param|null, // Deprecated: The "workbox_public_url" option is deprecated and will be removed in 2.0.0. use "config.workbox_public_url" instead. // The public path to the local workbox. Only used if use_cdn is false. // Default: "/workbox"
+ *             idb_public_url?: scalar|Param|null, // The public path to the local IndexDB. Only used if use_cdn is false. // Default: "/idb"
+ *             workbox_import_placeholder?: scalar|Param|null, // Deprecated: The "workbox_import_placeholder" option is deprecated and will be removed in 2.0.0. No replacement. // The placeholder for the workbox import. Will be replaced by the workbox import. // Default: "//WORKBOX_IMPORT_PLACEHOLDER"
+ *             standard_rules_placeholder?: scalar|Param|null, // Deprecated: The "standard_rules_placeholder" option is deprecated and will be removed in 2.0.0. No replacement. // The placeholder for the standard rules. Will be replaced by caching strategies. // Default: "//STANDARD_RULES_PLACEHOLDER"
+ *             offline_fallback_placeholder?: scalar|Param|null, // Deprecated: The "offline_fallback_placeholder" option is deprecated and will be removed in 2.0.0. No replacement. // The placeholder for the offline fallback. Will be replaced by the URL. // Default: "//OFFLINE_FALLBACK_PLACEHOLDER"
+ *             widgets_placeholder?: scalar|Param|null, // Deprecated: The "widgets_placeholder" option is deprecated and will be removed in 2.0.0. No replacement. // The placeholder for the widgets. Will be replaced by the widgets management events. // Default: "//WIDGETS_PLACEHOLDER"
+ *             clear_cache?: bool|Param, // Whether to clear the cache during the service worker activation. // Default: true
+ *             navigation_preload?: bool|Param, // Whether to enable navigation preload. This speeds up navigation requests by making the network request in parallel with service worker boot-up. Note: Do not enable if you are precaching HTML pages (e.g., with offline_fallback or warm_cache_urls), as it would be redundant. // Default: false
+ *             config?: array{
+ *                 debug?: bool|Param, // Controls workbox debug logging. Set to false to disable debug mode and logging. // Default: true
+ *                 version?: scalar|Param|null, // The version of workbox. When using local files, the version shall be "7.0.0." // Default: "7.3.0"
+ *                 use_cdn?: bool|Param, // Whether to use the local workbox or the CDN. // Default: false
+ *                 workbox_public_url?: scalar|Param|null, // The public path to the local workbox. Only used if use_cdn is false. // Default: "/workbox"
+ *             },
+ *             offline_fallback?: array{
+ *                 cache_name?: scalar|Param|null, // The name of the offline cache. // Default: "offline"
+ *                 page?: Param|string|array{ // The URL of the offline page fallback.
+ *                     path?: scalar|Param|null, // The URL or route name.
+ *                     path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                     params?: list<mixed>,
+ *                 },
+ *                 image?: Param|string|array{ // The URL of the offline image fallback.
+ *                     path?: scalar|Param|null, // The URL or route name.
+ *                     path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                     params?: list<mixed>,
+ *                 },
+ *                 font?: Param|string|array{ // The URL of the offline font fallback.
+ *                     path?: scalar|Param|null, // The URL or route name.
+ *                     path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                     params?: list<mixed>,
+ *                 },
+ *             },
+ *             image_cache?: bool|array{
+ *                 enabled?: bool|Param, // Default: true
+ *                 cache_name?: scalar|Param|null, // The name of the image cache. // Default: "images"
+ *                 regex?: scalar|Param|null, // The regex to match the images. // Default: "/\\.(ico|png|jpe?g|gif|svg|webp|bmp)$/"
+ *                 max_entries?: int|Param, // The maximum number of entries in the image cache. // Default: 60
+ *                 max_age?: scalar|Param|null, // The maximum number of seconds before the image cache is invalidated. // Default: 31536000
+ *             },
+ *             asset_cache?: bool|array{
+ *                 enabled?: bool|Param, // Default: true
+ *                 cache_name?: scalar|Param|null, // The name of the asset cache. // Default: "assets"
+ *                 regex?: scalar|Param|null, // The regex to match the assets. // Default: "/\\.(css|js|json|xml|txt|map|ico|png|jpe?g|gif|svg|webp|bmp)$/"
+ *                 max_age?: scalar|Param|null, // The maximum number of seconds before the asset cache is invalidated. // Default: 31536000
+ *             },
+ *             font_cache?: bool|array{
+ *                 enabled?: bool|Param, // Default: true
+ *                 cache_name?: scalar|Param|null, // The name of the font cache. // Default: "fonts"
+ *                 regex?: scalar|Param|null, // The regex to match the fonts. // Default: "/\\.(ttf|eot|otf|woff2)$/"
+ *                 max_entries?: int|Param, // The maximum number of entries in the image cache. // Default: 60
+ *                 max_age?: int|Param, // The maximum number of seconds before the font cache is invalidated. // Default: 31536000
+ *             },
+ *             resource_caches?: list<array{ // Default: []
+ *                 match_callback?: scalar|Param|null, // The regex or callback function to match the URLs.
+ *                 cache_name?: scalar|Param|null, // The name of the page cache.
+ *                 network_timeout?: int|Param, // The network timeout in seconds before cache is called (for "NetworkFirst" and "NetworkOnly" strategies). // Default: 3
+ *                 strategy?: scalar|Param|null, // The caching strategy. Only "NetworkFirst", "CacheFirst" and "StaleWhileRevalidate" are supported. StaleWhileRevalidate provides instant page loads with background updates. // Default: "StaleWhileRevalidate"
+ *                 max_entries?: scalar|Param|null, // The maximum number of entries in the cache (for "CacheFirst" and "NetworkFirst" strategy only). // Default: null
+ *                 max_age?: scalar|Param|null, // The maximum number of seconds before the cache is invalidated (for "CacheFirst" and "NetWorkFirst" strategy only). // Default: null
+ *                 broadcast?: bool|Param, // Whether to broadcast the cache update events (for "StaleWhileRevalidate" strategy only). Enables client notification when content is updated. // Default: true
+ *                 range_requests?: bool|Param, // Whether to support range requests (for "CacheFirst" strategy only). // Default: false
+ *                 cacheable_response_headers?: list<scalar|Param|null>,
+ *                 cacheable_response_statuses?: list<int|Param>,
+ *                 broadcast_headers?: bool|list<scalar|Param|null>,
+ *                 preload_urls?: list<Param|string|array{ // Default: []
+ *                     path?: scalar|Param|null, // The URL of the shortcut.
+ *                     params?: list<mixed>,
+ *                 }>,
+ *             }>,
+ *             background_sync?: list<array{ // Default: []
+ *                 queue_name?: scalar|Param|null, // The name of the queue.
+ *                 match_callback?: scalar|Param|null, // The regex or callback function to match the URLs.
+ *                 error_on_4xx?: bool|Param, // Whether to retry the request on 4xx errors. // Default: true
+ *                 error_on_5xx?: bool|Param, // Whether to retry the request on 5xx errors. // Default: true
+ *                 expected_status_codes?: list<int|Param>,
+ *                 expect_redirect?: bool|Param, // Whether to expect a redirect (JS response type should be "opaqueredirect" or the "redirected" property is "true"). // Default: false
+ *                 method?: scalar|Param|null, // The HTTP method. // Default: "POST"
+ *                 broadcast_channel?: scalar|Param|null, // The broadcast channel. Set null to disable. // Default: null
+ *                 max_retention_time?: int|Param, // The maximum retention time in minutes. // Default: 1440
+ *                 force_sync_fallback?: bool|Param, // If `true`, instead of attempting to use background sync events, always attempt to replay queued request at service worker startup. Most folks will not need this, unless you explicitly target a runtime like Electron that exposes the interfaces for background sync, but does not have a working implementation. // Default: false
+ *             }>,
+ *             background_fetch?: bool|array{
+ *                 enabled?: bool|Param, // Default: false
+ *                 db_name?: scalar|Param|null, // The IndexDB name where downloads are stored // Default: "bgfetch-completed"
+ *                 progress_url?: Param|string|array{ // The URL of the progress page.
+ *                     path?: scalar|Param|null, // The URL or route name.
+ *                     path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                     params?: list<mixed>,
+ *                 },
+ *                 success_url?: Param|string|array{ // The URL of the success page.
+ *                     path?: scalar|Param|null, // The URL or route name.
+ *                     path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                     params?: list<mixed>,
+ *                 },
+ *                 success_message?: scalar|Param|null, // The message to display on success. This message is translated. // Default: null
+ *                 failure_message?: scalar|Param|null, // The message to display on success. This message is translated. // Default: null
+ *             },
+ *             image_cache_name?: scalar|Param|null, // Deprecated: The "image_cache_name" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.image_cache.cache_name" instead. // The name of the image cache. // Default: "images"
+ *             font_cache_name?: scalar|Param|null, // Deprecated: The "font_cache_name" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.font_cache.cache_name" instead. // The name of the font cache. // Default: "fonts"
+ *             page_cache_name?: scalar|Param|null, // Deprecated: The "page_cache_name" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.resource_caches[].cache_name" instead. // The name of the page cache. // Default: "pages"
+ *             asset_cache_name?: scalar|Param|null, // Deprecated: The "asset_cache_name" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.asset_cache.cache_name" instead. // The name of the asset cache. // Default: "assets"
+ *             page_fallback?: Param|string|array{ // The URL of the offline page fallback.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             image_fallback?: Param|string|array{ // The URL of the offline image fallback.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             font_fallback?: Param|string|array{ // The URL of the offline font fallback.
+ *                 path?: scalar|Param|null, // The URL or route name.
+ *                 path_type_reference?: int|Param, // The path type reference to generate paths/URLs. See https://symfony.com/doc/current/routing.html#generating-urls-in-controllers for more information. // Default: 1
+ *                 params?: list<mixed>,
+ *             },
+ *             image_regex?: scalar|Param|null, // Deprecated: The "image_regex" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.image_cache.regex" instead. // The regex to match the images. // Default: "/\\.(ico|png|jpe?g|gif|svg|webp|bmp)$/"
+ *             static_regex?: scalar|Param|null, // Deprecated: The "static_regex" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.asset_cache.regex" instead. // The regex to match the static files. // Default: "/\\.(css|js|json|xml|txt|map)$/"
+ *             font_regex?: scalar|Param|null, // Deprecated: The "font_regex" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.font_cache.regex" instead. // The regex to match the static files. // Default: "/\\.(ttf|eot|otf|woff2)$/"
+ *             max_image_cache_entries?: int|Param, // Deprecated: The "max_image_cache_entries" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.image_cache.max_entries" instead. // The maximum number of entries in the image cache. // Default: 60
+ *             max_image_age?: int|Param, // Deprecated: The "max_image_age" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.image_cache.max_age" instead. // The maximum number of seconds before the image cache is invalidated. // Default: 31536000
+ *             max_font_cache_entries?: int|Param, // Deprecated: The "max_font_cache_entries" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.font_cache.max_entries" instead. // The maximum number of entries in the font cache. // Default: 30
+ *             max_font_age?: int|Param, // Deprecated: The "max_font_age" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.font_cache.max_age" instead. // The maximum number of seconds before the font cache is invalidated. // Default: 31536000
+ *             network_timeout_seconds?: int|Param, // Deprecated: The "network_timeout_seconds" option is deprecated and will be removed in 2.0.0. Please use "pwa.serviceworker.workbox.resource_caches[].network_timeout" instead. // The network timeout in seconds before cache is called (for warm cache URLs only). // Default: 3
+ *             warm_cache_urls?: list<Param|string|array{ // Default: []
+ *                 path?: scalar|Param|null, // The URL of the shortcut.
+ *                 params?: list<mixed>,
+ *             }>,
+ *             ...<string, mixed>
+ *         },
+ *     },
+ *     speculation_rules?: bool|array{ // Speculation Rules API configuration for prefetching and prerendering pages.
+ *         enabled?: bool|Param, // Default: false
+ *         prefetch?: list<array{ // Default: []
+ *             source?: "list"|"document"|Param, // The source type: "list" for explicit URLs, "document" for link matching. // Default: "document"
+ *             urls?: list<Param|string|array{ // Default: []
+ *                 path?: scalar|Param|null, // The URL path or route name.
+ *                 params?: list<mixed>,
+ *             }>,
+ *             selector_matches?: scalar|Param|null, // For "document" source: CSS selector to match links. // Default: null
+ *             href_matches?: scalar|Param|null, // For "document" source: URL pattern to match href attributes. // Default: null
+ *             eagerness?: "immediate"|"eager"|"moderate"|"conservative"|Param, // Eagerness level: "immediate" (viewport), "eager" (hover 200ms), "moderate" (hover 100ms), "conservative" (mousedown/touchstart). // Default: "moderate"
+ *             referrer_policy?: scalar|Param|null, // Referrer policy for the speculative request. // Default: null
+ *         }>,
+ *         prerender?: list<array{ // Default: []
+ *             source?: "list"|"document"|Param, // The source type: "list" for explicit URLs, "document" for link matching. // Default: "document"
+ *             urls?: list<Param|string|array{ // Default: []
+ *                 path?: scalar|Param|null, // The URL path or route name.
+ *                 params?: list<mixed>,
+ *             }>,
+ *             selector_matches?: scalar|Param|null, // For "document" source: CSS selector to match links. // Default: null
+ *             href_matches?: scalar|Param|null, // For "document" source: URL pattern to match href attributes. // Default: null
+ *             eagerness?: "immediate"|"eager"|"moderate"|"conservative"|Param, // Eagerness level. For prerender, "conservative" is recommended. // Default: "conservative"
+ *             referrer_policy?: scalar|Param|null, // Referrer policy for the speculative request. // Default: null
+ *         }>,
+ *     },
+ *     web_client?: scalar|Param|null, // The Panther Client for generating screenshots. If not set, the default client will be used. // Default: null
+ *     user_agent?: scalar|Param|null, // The user agent to use when generating screenshots. When this user agent is detected, the Symfony profiler and debug toolbar will be automatically disabled to ensure screenshots look like production. // Default: "PWAScreenshotBot"
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1668,6 +2076,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     twig_component?: TwigComponentConfig,
  *     flysystem?: FlysystemConfig,
  *     live_component?: LiveComponentConfig,
+ *     pwa?: PwaConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1688,6 +2097,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_component?: TwigComponentConfig,
  *         flysystem?: FlysystemConfig,
  *         live_component?: LiveComponentConfig,
+ *         pwa?: PwaConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1706,6 +2116,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_component?: TwigComponentConfig,
  *         flysystem?: FlysystemConfig,
  *         live_component?: LiveComponentConfig,
+ *         pwa?: PwaConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1726,6 +2137,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         dama_doctrine_test?: DamaDoctrineTestConfig,
  *         flysystem?: FlysystemConfig,
  *         live_component?: LiveComponentConfig,
+ *         pwa?: PwaConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,

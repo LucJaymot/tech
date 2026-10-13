@@ -29,44 +29,48 @@
             </twig:Card>
         {% endif %}
 
-        <twig:Card title="Timetable">
-            <ul class="-my-2 divide-y divide-slate-800" id="timetable">
-                {% for passage in vue.timetable %}
-                    <li class="flex gap-4 py-2">
-                        <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ passage.debut|date('H:i') }} – {{ passage.fin|date('H:i') }}</span>
-                        <span>{{ passage.artistes is empty ? 'À programmer' : passage.artistes|join(' b2b ') }}</span>
-                    </li>
-                {% else %}
-                    <li class="py-2 text-slate-500">Aucun passage programmé.</li>
-                {% endfor %}
-            </ul>
-        </twig:Card>
+        <turbo-frame id="feuille-de-route-timetable-{{ vue.id }}" target="_top" class="block">
+            <twig:Card title="Timetable">
+                <ul class="-my-2 divide-y divide-slate-800" id="timetable">
+                    {% for passage in vue.timetable %}
+                        <li class="flex gap-4 py-2">
+                            <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ passage.debut|date('H:i') }} – {{ passage.fin|date('H:i') }}</span>
+                            <span>{{ passage.artistes is empty ? 'À programmer' : passage.artistes|join(' b2b ') }}</span>
+                        </li>
+                    {% else %}
+                        <li class="py-2 text-slate-500">Aucun passage programmé.</li>
+                    {% endfor %}
+                </ul>
+            </twig:Card>
+        </turbo-frame>
 
-        <twig:Card title="Équipe">
-            <div class="flex flex-col gap-4" id="equipe">
-                {% for poste in vue.equipe %}
-                    <section>
-                        <h3 class="font-medium">{{ poste.poste }}</h3>
-                        <ul class="mt-1 flex flex-col gap-1 text-sm">
-                            {% for creneau in poste.creneaux %}
-                                <li class="flex gap-4">
-                                    <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ creneau.debut|date('H:i') }} – {{ creneau.fin|date('H:i') }}</span>
-                                    <span>
-                                        {% for benevole in creneau.benevoles %}
-                                            {{ benevole.nom }}{% if contacts and benevole.telephone %} (<a href="tel:{{ benevole.telephone }}" class="text-indigo-400 underline">{{ benevole.telephone }}</a>){% endif %}{{ not loop.last ? ', ' }}
-                                        {% else %}
-                                            <span class="text-red-300">Personne</span>
-                                        {% endfor %}
-                                    </span>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </section>
-                {% else %}
-                    <p class="text-slate-500">Aucun poste.</p>
-                {% endfor %}
-            </div>
-        </twig:Card>
+        <turbo-frame id="feuille-de-route-equipe-{{ vue.id }}" target="_top" class="block">
+            <twig:Card title="Équipe">
+                <div class="flex flex-col gap-4" id="equipe">
+                    {% for poste in vue.equipe %}
+                        <section>
+                            <h3 class="font-medium">{{ poste.poste }}</h3>
+                            <ul class="mt-1 flex flex-col gap-1 text-sm">
+                                {% for creneau in poste.creneaux %}
+                                    <li class="flex gap-4">
+                                        <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ creneau.debut|date('H:i') }} – {{ creneau.fin|date('H:i') }}</span>
+                                        <span>
+                                            {% for benevole in creneau.benevoles %}
+                                                {{ benevole.nom }}{% if contacts and benevole.telephone %} (<a href="tel:{{ benevole.telephone }}" class="text-indigo-400 underline">{{ benevole.telephone }}</a>){% endif %}{{ not loop.last ? ', ' }}
+                                            {% else %}
+                                                <span class="text-red-300">Personne</span>
+                                            {% endfor %}
+                                        </span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </section>
+                    {% else %}
+                        <p class="text-slate-500">Aucun poste.</p>
+                    {% endfor %}
+                </div>
+            </twig:Card>
+        </turbo-frame>
 
         {% if contacts and vue.artistes is not empty %}
             <twig:Card title="Contacts artistes">

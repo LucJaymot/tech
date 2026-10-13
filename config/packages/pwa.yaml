@@ -1,0 +1,34 @@
+# Documentation available at https://pwa.spomky-labs.com/
+pwa:
+    asset_compiler: false # Default to true. Will change to false in 2.0.0.
+    image_processor: 'pwa.image_processor.gd'
+    manifest:
+        enabled: true
+        name: 'Caisson'
+        short_name: 'Caisson'
+        description: 'Préparer et vivre les soirées des collectifs.'
+        lang: fr
+        display: standalone
+        scope: /
+        start_url: app_collective
+        background_color: '#020617'
+        theme_color: '#020617'
+        icons:
+            -   src: 'images/icone.png'
+                sizes: [192, 512]
+                purpose: any
+    serviceworker:
+        enabled: true
+        # Custom routes, appended after the Workbox rules below.
+        src: 'pwa/sw.js'
+        skip_waiting: true
+        workbox:
+            config:
+                debug: false
+            google_fonts:
+                enabled: false
+            # Every page that cannot load shows /hors-ligne; assets and images
+            # are cached by the default rules.
+            offline_fallback:
+                page:
+                    path: app_hors_ligne

@@ -6,13 +6,15 @@
     <p class="text-sm text-slate-400">Planning bénévoles · {{ soiree.date|date('d/m/Y') }}</p>
     <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
 
-    <div class="mt-4" id="resume-trous">
-        {% if trous is empty %}
-            <twig:Led statut="ok" libelle="Tous les créneaux sont pourvus" />
-        {% else %}
-            <twig:Led statut="bloquant" libelle="{{ manquants }} personne{{ manquants > 1 ? 's' }} manquante{{ manquants > 1 ? 's' }} sur {{ trous|length }} créneau{{ trous|length > 1 ? 'x' }}" />
-        {% endif %}
-    </div>
+    <turbo-frame id="planning-trous-{{ soiree.id }}" target="_top" class="block">
+        <div class="mt-4" id="resume-trous">
+            {% if trous is empty %}
+                <twig:Led statut="ok" libelle="Tous les créneaux sont pourvus" />
+            {% else %}
+                <twig:Led statut="bloquant" libelle="{{ manquants }} personne{{ manquants > 1 ? 's' }} manquante{{ manquants > 1 ? 's' }} sur {{ trous|length }} créneau{{ trous|length > 1 ? 'x' }}" />
+            {% endif %}
+        </div>
+    </turbo-frame>
 
     {% set token = csrf_token('planning') %}
     {% set noms = {} %}
@@ -20,68 +22,70 @@
 
     <div class="mt-6 flex flex-col gap-6">
         {% for poste in soiree.postes %}
-            <section id="poste-{{ poste.id }}" class="flex flex-col gap-3">
-                <h2 class="text-base font-semibold">{{ poste.intitule }}</h2>
+            <turbo-frame id="planning-poste-{{ poste.id }}" target="_top" class="block">
+                <section id="poste-{{ poste.id }}" class="flex flex-col gap-3">
+                    <h2 class="text-base font-semibold">{{ poste.intitule }}</h2>
 
-                {% for creneau in poste.creneaux %}
-                    {% set trou = trous_par_creneau[creneau.id] ?? null %}
-                    {% set dispos = disponibles[creneau.id] ?? [] %}
-                    <article id="creneau-{{ creneau.id }}" class="rounded-xl border {{ trou ? 'border-red-900' : 'border-slate-800' }} bg-slate-900 p-4">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="font-medium tabular-nums">{{ creneau.debut|date('H:i') }} – {{ creneau.fin|date('H:i') }} <span class="text-sm font-normal text-slate-400">· {{ creneau.nombreRequis }} requis</span></p>
-                            {% if trou %}
-                                <twig:Led statut="bloquant" libelle="{{ trou.manquants }} manquant{{ trou.manquants > 1 ? 's' }}" />
-                            {% else %}
-                                <twig:Led statut="ok" libelle="Complet" />
+                    {% for creneau in poste.creneaux %}
+                        {% set trou = trous_par_creneau[creneau.id] ?? null %}
+                        {% set dispos = disponibles[creneau.id] ?? [] %}
+                        <article id="creneau-{{ creneau.id }}" class="rounded-xl border {{ trou ? 'border-red-900' : 'border-slate-800' }} bg-slate-900 p-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <p class="font-medium tabular-nums">{{ creneau.debut|date('H:i') }} – {{ creneau.fin|date('H:i') }} <span class="text-sm font-normal text-slate-400">· {{ creneau.nombreRequis }} requis</span></p>
+                                {% if trou %}
+                                    <twig:Led statut="bloquant" libelle="{{ trou.manquants }} manquant{{ trou.manquants > 1 ? 's' }}" />
+                                {% else %}
+                                    <twig:Led statut="ok" libelle="Complet" />
+                                {% endif %}
+                            </div>
+
+                            <ul class="mt-3 flex flex-col gap-1 text-sm">
+                                {% for affectation in creneau.affectations %}
+                                    <li class="flex items-center justify-between gap-2">
+                                        <span>{{ affectation.benevole.nom }}</span>
+                                        {% if peut_modifier %}
+                                            <form method="post" action="{{ path('app_planning_retirer', {id: affectation.id}) }}">
+                                                <input type="hidden" name="_token" value="{{ token }}">
+                                                <twig:Button type="submit" variant="ghost" size="sm" aria-label="Retirer {{ affectation.benevole.nom }}">Retirer</twig:Button>
+                                            </form>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    <li class="text-slate-500">Personne pour l'instant.</li>
+                                {% endfor %}
+                            </ul>
+
+                            {% if dispos is not empty %}
+                                <p class="mt-2 text-xs text-slate-400">Disponibles : {{ dispos|map(id => noms['b' ~ id] ?? '?')|join(', ') }}</p>
                             {% endif %}
-                        </div>
 
-                        <ul class="mt-3 flex flex-col gap-1 text-sm">
-                            {% for affectation in creneau.affectations %}
-                                <li class="flex items-center justify-between gap-2">
-                                    <span>{{ affectation.benevole.nom }}</span>
-                                    {% if peut_modifier %}
-                                        <form method="post" action="{{ path('app_planning_retirer', {id: affectation.id}) }}">
-                                            <input type="hidden" name="_token" value="{{ token }}">
-                                            <twig:Button type="submit" variant="ghost" size="sm" aria-label="Retirer {{ affectation.benevole.nom }}">Retirer</twig:Button>
-                                        </form>
-                                    {% endif %}
-                                </li>
-                            {% else %}
-                                <li class="text-slate-500">Personne pour l'instant.</li>
-                            {% endfor %}
-                        </ul>
+                            {% if peut_modifier and benevoles is not empty %}
+                                <form method="post" action="{{ path('app_planning_affecter', {id: creneau.id}) }}" class="mt-3 flex gap-2">
+                                    <input type="hidden" name="_token" value="{{ token }}">
+                                    <label class="sr-only" for="affecter-{{ creneau.id }}">Bénévole à affecter</label>
+                                    <select id="affecter-{{ creneau.id }}" name="benevole" class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base">
+                                        {% set deja = creneau.affectations|map(a => a.benevole.id) %}
+                                        {% for benevole in benevoles|filter(b => b.id not in deja)|sort((a, b) => (b.id in dispos) <=> (a.id in dispos)) %}
+                                            <option value="{{ benevole.id }}">{{ benevole.nom }}{{ benevole.id in dispos ? ' · disponible' }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <twig:Button type="submit" variant="secondary" size="sm">Affecter</twig:Button>
+                                </form>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
 
-                        {% if dispos is not empty %}
-                            <p class="mt-2 text-xs text-slate-400">Disponibles : {{ dispos|map(id => noms['b' ~ id] ?? '?')|join(', ') }}</p>
-                        {% endif %}
-
-                        {% if peut_modifier and benevoles is not empty %}
-                            <form method="post" action="{{ path('app_planning_affecter', {id: creneau.id}) }}" class="mt-3 flex gap-2">
-                                <input type="hidden" name="_token" value="{{ token }}">
-                                <label class="sr-only" for="affecter-{{ creneau.id }}">Bénévole à affecter</label>
-                                <select id="affecter-{{ creneau.id }}" name="benevole" class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base">
-                                    {% set deja = creneau.affectations|map(a => a.benevole.id) %}
-                                    {% for benevole in benevoles|filter(b => b.id not in deja)|sort((a, b) => (b.id in dispos) <=> (a.id in dispos)) %}
-                                        <option value="{{ benevole.id }}">{{ benevole.nom }}{{ benevole.id in dispos ? ' · disponible' }}</option>
-                                    {% endfor %}
-                                </select>
-                                <twig:Button type="submit" variant="secondary" size="sm">Affecter</twig:Button>
-                            </form>
-                        {% endif %}
-                    </article>
-                {% endfor %}
-
-                {% if peut_modifier %}
-                    <form method="post" action="{{ path('app_planning_creneau', {id: poste.id}) }}" class="flex flex-wrap items-end gap-2 text-sm">
-                        <input type="hidden" name="_token" value="{{ token }}">
-                        <label class="flex flex-col gap-1">Début <input type="time" name="debut" required class="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-base"></label>
-                        <label class="flex flex-col gap-1">Fin <input type="time" name="fin" required class="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-base"></label>
-                        <label class="flex flex-col gap-1">Personnes <input type="number" name="nombre" min="1" value="1" class="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-base"></label>
-                        <twig:Button type="submit" variant="ghost" size="sm">Ajouter un créneau</twig:Button>
-                    </form>
-                {% endif %}
-            </section>
+                    {% if peut_modifier %}
+                        <form method="post" action="{{ path('app_planning_creneau', {id: poste.id}) }}" class="flex flex-wrap items-end gap-2 text-sm">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <label class="flex flex-col gap-1">Début <input type="time" name="debut" required class="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-base"></label>
+                            <label class="flex flex-col gap-1">Fin <input type="time" name="fin" required class="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-base"></label>
+                            <label class="flex flex-col gap-1">Personnes <input type="number" name="nombre" min="1" value="1" class="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-base"></label>
+                            <twig:Button type="submit" variant="ghost" size="sm">Ajouter un créneau</twig:Button>
+                        </form>
+                    {% endif %}
+                </section>
+            </turbo-frame>
         {% else %}
             <twig:EmptyState title="Aucun poste" description="Ajoutez les postes à tenir pendant la soirée : accueil, buvette…" />
         {% endfor %}

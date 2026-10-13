@@ -1,0 +1,5 @@
+parameters:
+    # Accounts without login for this long are warned by e-mail, then deleted
+    # after the notice unless they log in (App\Rgpd\ComptesInactifs).
+    app.rgpd.inactivite: '2 years'
+    app.rgpd.preavis: '30 days'

@@ -12,6 +12,7 @@ use App\Storage\FichierRefuse;
 use App\Visuel\IdentiteVisuelle;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,7 +31,7 @@ final class CollectiveController extends AbstractController
     }
 
     #[Route('/collectif', name: 'app_collective', methods: ['GET'])]
-    public function show(MembershipRepository $memberships, InvitationRepository $invitations, SoireeRepository $soirees): Response
+    public function show(MembershipRepository $memberships, InvitationRepository $invitations, SoireeRepository $soirees, #[Autowire('%env(VAPID_PUBLIC_KEY)%')] string $clePush): Response
     {
         $collective = $this->activeCollective->get();
         $canManage = null !== $collective && $this->isGranted(CollectiveVoter::MANAGE_MEMBERS, $collective);
@@ -43,6 +44,7 @@ final class CollectiveController extends AbstractController
             'soirees' => $soirees->findBy([], ['date' => 'ASC']),
             'can_view_budget' => null !== $collective && $this->isGranted(CollectiveVoter::VIEW_BUDGET, $collective),
             'can_edit' => null !== $collective && $this->isGranted(CollectiveVoter::EDIT, $collective),
+            'cle_push' => $clePush,
         ]);
     }
 

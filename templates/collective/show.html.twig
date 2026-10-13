@@ -65,6 +65,18 @@
                 </twig:Card>
             {% endif %}
 
+            <twig:Card title="Notifications" description="Rappels des démarches sur ce téléphone ou cet ordinateur, en plus des e-mails." id="notifications">
+                <div class="flex flex-wrap items-center justify-between gap-3"
+                     data-controller="notifications"
+                     data-notifications-cle-value="{{ cle_push }}"
+                     data-notifications-abonner-value="{{ path('app_push_abonner') }}"
+                     data-notifications-desabonner-value="{{ path('app_push_desabonner') }}"
+                     data-notifications-jeton-value="{{ csrf_token('push') }}">
+                    <p class="text-sm text-slate-300" data-notifications-target="etat" aria-live="polite">Vérification…</p>
+                    <twig:Button size="sm" variant="secondary" data-notifications-target="bouton" data-action="notifications#basculer" hidden>Activer</twig:Button>
+                </div>
+            </twig:Card>
+
             {% if can_manage %}
                 <twig:Card title="Identité visuelle" description="Couleur d'accent et logo des visuels de line-up." id="identite">
                     <form method="post" action="{{ path('app_collective_identite') }}" enctype="multipart/form-data" data-turbo="false" class="flex flex-col gap-4">

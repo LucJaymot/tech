@@ -19,11 +19,11 @@
     {% if logo %}
         <image href="{{ logo }}" x="{{ marge }}" y="{{ marge }}" width="160" height="160" preserveAspectRatio="xMinYMin meet"/>
     {% else %}
-        <text x="{{ marge }}" y="{{ marge + 40 }}" font-size="40" font-weight="700" fill="{{ accent }}">{{ collectif }}</text>
+        <text x="{{ marge }}" y="{{ marge + 40 }}" font-size="40" font-weight="700" fill="{{ accent_lisible }}">{{ collectif }}</text>
     {% endif %}
 
     <text x="{{ marge }}" y="{{ y_titre }}" font-size="{{ taille_titre|round(1) }}" font-weight="800" fill="#ffffff">{{ soiree }}</text>
-    <text x="{{ marge }}" y="{{ y_titre + 80 }}" font-size="40" fill="{{ accent }}">{{ jour|capitalize }} · {{ ouverture }}{{ lieu ? ' · ' ~ lieu }}</text>
+    <text x="{{ marge }}" y="{{ y_titre + 80 }}" font-size="40" fill="{{ accent_lisible }}">{{ jour|capitalize }} · {{ ouverture }}{{ lieu ? ' · ' ~ lieu }}</text>
 
     {% for artiste in artistes %}
         {% set taille = min(taille_base, utile / (max(artiste|length, 1) * 0.58)) %}

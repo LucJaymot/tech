@@ -6,10 +6,10 @@
 #}
 {% props variant = 'primary', size = 'md', href = null, type = 'button', block = false %}
 {% set button = html_cva(
-    base: 'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
+    base: 'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent-lisible) disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
     variants: {
         variant: {
-            primary: 'bg-indigo-500 text-white hover:bg-indigo-400',
+            primary: 'bg-(--accent) text-(--accent-texte) hover:brightness-110',
             secondary: 'border border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700',
             danger: 'bg-red-600 text-white hover:bg-red-500',
             ghost: 'text-slate-300 hover:bg-slate-800 hover:text-white',

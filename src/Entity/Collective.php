@@ -37,6 +37,12 @@ class Collective
     #[Assert\Regex('/^#[0-9a-f]{6}$/', message: 'Choisissez une couleur au format #rrggbb.')]
     private string $couleurAccent = '#6366f1';
 
+    /**
+     * Subscription plan. Nothing depends on it until a price is decided.
+     */
+    #[ORM\Column(length: 20, options: ['default' => 'gratuit'])]
+    private string $plan = 'gratuit';
+
     /** Key of its PNG or JPEG logo in the "visuels" storage, managed by App\Visuel\IdentiteVisuelle. */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $logo = null;
@@ -99,6 +105,11 @@ class Collective
         $this->couleurAccent = mb_strtolower($couleurAccent);
 
         return $this;
+    }
+
+    public function getPlan(): string
+    {
+        return $this->plan;
     }
 
     public function getLogo(): ?string

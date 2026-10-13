@@ -40,43 +40,47 @@
             </twig:block>
         </twig:Card>
 
-        <twig:Card title="Débriefing" description="Un texte par membre." id="debriefings">
-            <ul class="-my-2 divide-y divide-slate-800">
-                {% for d in debriefings %}
-                    <li class="py-3">
-                        <p class="text-sm font-medium">{{ d.auteur.displayName }} <span class="font-normal text-slate-400">· {{ d.modifieLe|date('d/m/Y H:i') }}</span></p>
-                        <p class="mt-1 whitespace-pre-line text-slate-300">{{ d.texte }}</p>
-                    </li>
-                {% else %}
-                    <li class="py-3 text-slate-500">Aucun débriefing pour l'instant.</li>
-                {% endfor %}
-            </ul>
-            {% if peut_debriefer %}
-                <form method="post" action="{{ path('app_bilan_debriefing', {id: soiree.id}) }}" class="mt-4 flex flex-col gap-2 border-t border-slate-800 pt-4">
-                    <input type="hidden" name="_token" value="{{ csrf_token('debriefing') }}">
-                    <label for="debriefing-texte" class="text-sm font-medium">Mon débriefing</label>
-                    <textarea id="debriefing-texte" name="texte" rows="5" maxlength="5000" required class="rounded-lg border border-slate-700 bg-slate-950 p-3 text-sm">{{ mon_debriefing ? mon_debriefing.texte }}</textarea>
-                    <div><twig:Button type="submit" size="sm">Enregistrer</twig:Button></div>
-                </form>
-            {% endif %}
-        </twig:Card>
+        <turbo-frame id="bilan-debriefings-{{ soiree.id }}" target="_top" class="block">
+            <twig:Card title="Débriefing" description="Un texte par membre." id="debriefings">
+                <ul class="-my-2 divide-y divide-slate-800">
+                    {% for d in debriefings %}
+                        <li class="py-3">
+                            <p class="text-sm font-medium">{{ d.auteur.displayName }} <span class="font-normal text-slate-400">· {{ d.modifieLe|date('d/m/Y H:i') }}</span></p>
+                            <p class="mt-1 whitespace-pre-line text-slate-300">{{ d.texte }}</p>
+                        </li>
+                    {% else %}
+                        <li class="py-3 text-slate-500">Aucun débriefing pour l'instant.</li>
+                    {% endfor %}
+                </ul>
+                {% if peut_debriefer %}
+                    <form method="post" action="{{ path('app_bilan_debriefing', {id: soiree.id}) }}" class="mt-4 flex flex-col gap-2 border-t border-slate-800 pt-4">
+                        <input type="hidden" name="_token" value="{{ csrf_token('debriefing') }}">
+                        <label for="debriefing-texte" class="text-sm font-medium">Mon débriefing</label>
+                        <textarea id="debriefing-texte" name="texte" rows="5" maxlength="5000" required class="rounded-lg border border-slate-700 bg-slate-950 p-3 text-sm">{{ mon_debriefing ? mon_debriefing.texte }}</textarea>
+                        <div><twig:Button type="submit" size="sm">Enregistrer</twig:Button></div>
+                    </form>
+                {% endif %}
+            </twig:Card>
+        </turbo-frame>
 
-        <twig:Card title="Clôture" id="cloture">
-            {% if soiree.statut == 'bilan_fait' %}
-                <twig:Led statut="ok" libelle="Bilan fait" />
-            {% elseif taches_ouvertes is not empty %}
-                {% for bloqueur in taches_ouvertes %}
-                    <twig:Led statut="bloquant" libelle="{{ bloqueur.message }}" />
-                {% endfor %}
-                <p class="mt-2 text-sm text-slate-400">Cochez-les dans les <a href="{{ path('app_retroplanning', {id: soiree.id}) }}" class="text-indigo-400 underline">démarches</a> pour pouvoir clore le bilan.</p>
-            {% elseif peut_faire_bilan %}
-                <form method="post" action="{{ path('app_bilan_faire', {id: soiree.id}) }}">
-                    <input type="hidden" name="_token" value="{{ csrf_token('faire-bilan') }}">
-                    <twig:Button type="submit" size="sm">Marquer le bilan comme fait</twig:Button>
-                </form>
-            {% else %}
-                <p class="text-sm text-slate-400">Le bilan se clôt par un administrateur, une fois la soirée terminée.</p>
-            {% endif %}
-        </twig:Card>
+        <turbo-frame id="bilan-cloture-{{ soiree.id }}" target="_top" class="block">
+            <twig:Card title="Clôture" id="cloture">
+                {% if soiree.statut == 'bilan_fait' %}
+                    <twig:Led statut="ok" libelle="Bilan fait" />
+                {% elseif taches_ouvertes is not empty %}
+                    {% for bloqueur in taches_ouvertes %}
+                        <twig:Led statut="bloquant" libelle="{{ bloqueur.message }}" />
+                    {% endfor %}
+                    <p class="mt-2 text-sm text-slate-400">Cochez-les dans les <a href="{{ path('app_retroplanning', {id: soiree.id}) }}" class="text-indigo-400 underline">démarches</a> pour pouvoir clore le bilan.</p>
+                {% elseif peut_faire_bilan %}
+                    <form method="post" action="{{ path('app_bilan_faire', {id: soiree.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('faire-bilan') }}">
+                        <twig:Button type="submit" size="sm">Marquer le bilan comme fait</twig:Button>
+                    </form>
+                {% else %}
+                    <p class="text-sm text-slate-400">Le bilan se clôt par un administrateur, une fois la soirée terminée.</p>
+                {% endif %}
+            </twig:Card>
+        </turbo-frame>
     </div>
 {% endblock %}

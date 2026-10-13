@@ -19,7 +19,7 @@
             <li class="flex-1">
                 <a href="{{ path(item.route) }}"
                    {% if active %}aria-current="page"{% endif %}
-                   class="flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-medium transition-colors {{ active ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200' }}">
+                   class="flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-medium transition-colors {{ active ? 'text-(--accent-lisible)' : 'text-slate-400 hover:text-slate-200' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="{{ item.icon }}"/>
                     </svg>

@@ -2,6 +2,8 @@ framework:
     notifier:
         chatter_transports:
         texter_transports:
+            # Browsers' Web Push (App\Notifier\WebPushTransport); "null://null" sends nothing.
+            webpush: '%env(WEBPUSH_DSN)%'
         channel_policy:
             # use chat/slack, chat/telegram, sms/twilio or sms/nexmo
             urgent: ['email']

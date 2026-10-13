@@ -7,7 +7,3 @@ import './stimulus_bootstrap.js';
  */
 import './styles/app.css';
 
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-}

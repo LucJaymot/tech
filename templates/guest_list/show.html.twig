@@ -7,40 +7,44 @@
     <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
 
     <div class="mt-6 flex flex-col gap-6">
-        <twig:Card title="Ma liste" description="{{ ma_liste.personnes }} / {{ ma_liste.quota }} personnes" id="ma-liste">
-            {{ include('guest_list/_invites.html.twig', {
-                invites: ma_liste.invites|map(i => {id: i.id, nom: i.nom, accompagnants: i.accompagnants, arrive: i.estPointe}),
-                retirable: true,
-                action: path('app_guest_list_retirer', {id: 0})|replace({'/0/': '/__ID__/'}),
-                token_id: 'guest-list',
-            }) }}
-            <div class="mt-4 border-t border-slate-800 pt-4">
-                {{ include('guest_list/_ajout.html.twig', {action: path('app_guest_list_ajouter', {id: soiree.id}), token_id: 'guest-list', restantes: ma_liste.placesRestantes}) }}
-            </div>
-        </twig:Card>
+        <turbo-frame id="guest-list-ma-liste-{{ soiree.id }}" target="_top" class="block">
+            <twig:Card title="Ma liste" description="{{ ma_liste.personnes }} / {{ ma_liste.quota }} personnes" id="ma-liste">
+                {{ include('guest_list/_invites.html.twig', {
+                    invites: ma_liste.invites|map(i => {id: i.id, nom: i.nom, accompagnants: i.accompagnants, arrive: i.estPointe}),
+                    retirable: true,
+                    action: path('app_guest_list_retirer', {id: 0})|replace({'/0/': '/__ID__/'}),
+                    token_id: 'guest-list',
+                }) }}
+                <div class="mt-4 border-t border-slate-800 pt-4">
+                    {{ include('guest_list/_ajout.html.twig', {action: path('app_guest_list_ajouter', {id: soiree.id}), token_id: 'guest-list', restantes: ma_liste.placesRestantes}) }}
+                </div>
+            </twig:Card>
+        </turbo-frame>
 
         {% if admin %}
-            <section class="flex flex-col gap-3" id="toutes-les-listes">
-                <h2 class="text-base font-semibold">Toutes les listes</h2>
-                {% for liste in listes %}
-                    <twig:Card title="{{ liste.proprietaire }}" description="{{ liste.booking ? 'Artiste' : 'Membre' }} · {{ liste.personnes }} / {{ liste.quota }} personnes">
-                        {{ include('guest_list/_invites.html.twig', {
-                            invites: liste.invites|map(i => {id: i.id, nom: i.nom, accompagnants: i.accompagnants, arrive: i.estPointe}),
-                            retirable: true,
-                            action: path('app_guest_list_retirer', {id: 0})|replace({'/0/': '/__ID__/'}),
-                            token_id: 'guest-list',
-                        }) }}
-                        <twig:block name="footer">
-                            <form method="post" action="{{ path('app_guest_list_quota', {id: liste.id}) }}" class="flex items-center gap-2 text-sm">
-                                <input type="hidden" name="_token" value="{{ csrf_token('guest-list') }}">
-                                <label for="quota-{{ liste.id }}">Quota</label>
-                                <input id="quota-{{ liste.id }}" type="number" name="quota" min="0" value="{{ liste.quota }}" class="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-base">
-                                <twig:Button type="submit" variant="ghost" size="sm">Enregistrer</twig:Button>
-                            </form>
-                        </twig:block>
-                    </twig:Card>
-                {% endfor %}
-            </section>
+            <turbo-frame id="guest-lists-{{ soiree.id }}" target="_top" class="block">
+                <section class="flex flex-col gap-3" id="toutes-les-listes">
+                    <h2 class="text-base font-semibold">Toutes les listes</h2>
+                    {% for liste in listes %}
+                        <twig:Card title="{{ liste.proprietaire }}" description="{{ liste.booking ? 'Artiste' : 'Membre' }} · {{ liste.personnes }} / {{ liste.quota }} personnes">
+                            {{ include('guest_list/_invites.html.twig', {
+                                invites: liste.invites|map(i => {id: i.id, nom: i.nom, accompagnants: i.accompagnants, arrive: i.estPointe}),
+                                retirable: true,
+                                action: path('app_guest_list_retirer', {id: 0})|replace({'/0/': '/__ID__/'}),
+                                token_id: 'guest-list',
+                            }) }}
+                            <twig:block name="footer">
+                                <form method="post" action="{{ path('app_guest_list_quota', {id: liste.id}) }}" class="flex items-center gap-2 text-sm">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('guest-list') }}">
+                                    <label for="quota-{{ liste.id }}">Quota</label>
+                                    <input id="quota-{{ liste.id }}" type="number" name="quota" min="0" value="{{ liste.quota }}" class="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-base">
+                                    <twig:Button type="submit" variant="ghost" size="sm">Enregistrer</twig:Button>
+                                </form>
+                            </twig:block>
+                        </twig:Card>
+                    {% endfor %}
+                </section>
+            </turbo-frame>
         {% endif %}
     </div>
 {% endblock %}

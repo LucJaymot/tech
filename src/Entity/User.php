@@ -40,6 +40,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
+    /** Set by App\EventListener\DerniereConnexionListener; null before the first login. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $derniereConnexionLe = null;
+
+    /** Inactive account warned of its deletion on that date (App\Rgpd\ComptesInactifs). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $suppressionPrevueLe = null;
+
     /**
      * @var Collection<int, Membership>
      */
@@ -137,6 +145,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getDerniereConnexionLe(): ?\DateTimeImmutable
+    {
+        return $this->derniereConnexionLe;
+    }
+
+    /**
+     * A login cancels any planned deletion.
+     */
+    public function seConnecte(\DateTimeImmutable $le): void
+    {
+        $this->derniereConnexionLe = $le;
+        $this->suppressionPrevueLe = null;
+    }
+
+    public function getSuppressionPrevueLe(): ?\DateTimeImmutable
+    {
+        return $this->suppressionPrevueLe;
+    }
+
+    public function prevoirSuppression(\DateTimeImmutable $le): void
+    {
+        $this->suppressionPrevueLe = $le;
     }
 
     /**

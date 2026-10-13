@@ -4,6 +4,7 @@ namespace App;
 
 use App\Obligations\Message\RappelsQuotidiens;
 use App\Obligations\Message\RecapitulatifHebdomadaire;
+use App\Rgpd\PurgerComptesInactifs;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule as SymfonySchedule;
@@ -29,6 +30,7 @@ class Schedule implements ScheduleProviderInterface
             ->add(
                 RecurringMessage::every('1 day', new RappelsQuotidiens(), from: new \DateTimeImmutable('today 07:00')),
                 RecurringMessage::every('1 week', new RecapitulatifHebdomadaire(), from: new \DateTimeImmutable('monday this week 08:00')),
+                RecurringMessage::every('1 day', new PurgerComptesInactifs(), from: new \DateTimeImmutable('today 03:00')),
             );
     }
 }

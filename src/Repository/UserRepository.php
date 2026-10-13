@@ -57,4 +57,34 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    /**
+     * Accounts not used since $avant (never logged in: since their creation)
+     * and not warned yet.
+     *
+     * @return list<User>
+     */
+    public function findInactifsDepuis(\DateTimeImmutable $avant): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('COALESCE(u.derniereConnexionLe, u.createdAt) < :avant')
+            ->andWhere('u.suppressionPrevueLe IS NULL')
+            ->setParameter('avant', $avant)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Warned accounts whose notice is over.
+     *
+     * @return list<User>
+     */
+    public function findASupprimer(\DateTimeImmutable $maintenant): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.suppressionPrevueLe <= :maintenant')
+            ->setParameter('maintenant', $maintenant)
+            ->getQuery()
+            ->getResult();
+    }
 }
