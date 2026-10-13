@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ soiree.nom }}{% endblock %}
+
+{% block body %}
+    <header class="flex items-start justify-between gap-4" id="en-tete">
+        <div class="min-w-0">
+            <p class="text-sm text-slate-400">Soirée · {{ soiree.date|date('d/m/Y') }}</p>
+            <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+            <p class="mt-1 text-slate-300">
+                {{ horaires.ouverture|date('H:i') }} → {{ horaires.fermeture|date('H:i') }}{% if horaires.fermeture|date('Y-m-d') != horaires.ouverture|date('Y-m-d') %} (lendemain){% endif %}
+                {% if soiree.lieu %} · {{ soiree.lieu.nom }}{% endif %}
+            </p>
+            <p class="mt-2" id="statut">
+                <twig:Led statut="{{ soiree.statut == 'preparation' ? 'attention' : 'ok' }}" libelle="{{ soiree.statutEnum.label }}" />
+            </p>
+        </div>
+        <div class="flex shrink-0 flex-col items-end gap-3">
+            <p class="font-doto text-4xl leading-none font-bold text-(--accent-lisible) tabular-nums sm:text-5xl" id="compte-a-rebours" aria-label="{{ compte_a_rebours == 'Jour J' ? 'C\'est aujourd\'hui' : compte_a_rebours }}">{{ compte_a_rebours }}</p>
+            {% if peut_modifier %}
+                <twig:Button href="{{ path('app_soiree_modifier', {id: soiree.id}) }}" variant="secondary" size="sm" id="modifier">Modifier</twig:Button>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="mt-6 flex flex-col gap-4">
+        <twig:Card title="Line-up" id="module-line-up">
+            <ul class="-my-2 divide-y divide-slate-800 text-sm">
+                {% for passage in line_up %}
+                    <li class="flex gap-4 py-2">
+                        <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ passage.debut|date('H:i') }} – {{ passage.fin|date('H:i') }}</span>
+                        <span>{{ passage.artistes is empty ? 'À programmer' : passage.artistes|join(' b2b ') }}</span>
+                    </li>
+                {% else %}
+                    <li class="py-2 text-slate-500">Aucun passage programmé.</li>
+                {% endfor %}
+            </ul>
+            <twig:block name="footer">
+                <twig:Button href="{{ path('app_feuille_de_route', {id: soiree.id}) }}" variant="secondary" size="sm">Feuille de route</twig:Button>
+                {% if peut_modifier %}<twig:Button href="{{ path('app_visuels', {id: soiree.id}) }}" variant="secondary" size="sm">Visuels</twig:Button>{% endif %}
+            </twig:block>
+        </twig:Card>
+
+        <twig:Card title="Démarches" id="module-taches">
+            {% if taches.ouvertes == 0 %}
+                <twig:Led statut="ok" libelle="Aucune démarche ouverte" />
+            {% else %}
+                <twig:Led statut="{{ taches.statut }}" libelle="{{ taches.ouvertes }} démarche{{ taches.ouvertes > 1 ? 's' }} à faire{% if taches.en_retard %}, dont {{ taches.en_retard }} en retard{% endif %}" />
+                <p class="mt-2 text-sm text-slate-300">Prochaine : {{ taches.prochaine.libelle }}, avant le {{ taches.prochaine.echeance|date('d/m/Y') }}</p>
+            {% endif %}
+            <twig:block name="footer">
+                <twig:Button href="{{ path('app_retroplanning', {id: soiree.id}) }}" variant="secondary" size="sm">Démarches</twig:Button>
+            </twig:block>
+        </twig:Card>
+
+        <twig:Card title="Bénévoles" id="module-benevoles">
+            {% if benevoles.creneaux == 0 %}
+                <p class="text-sm text-slate-500">Aucun créneau pour l'instant.</p>
+            {% elseif benevoles.manquants == 0 %}
+                <twig:Led statut="ok" libelle="{{ benevoles.creneaux }} créneau{{ benevoles.creneaux > 1 ? 'x' }}, tous pourvus" />
+            {% else %}
+                <twig:Led statut="bloquant" libelle="{{ benevoles.manquants }} personne{{ benevoles.manquants > 1 ? 's' }} manquante{{ benevoles.manquants > 1 ? 's' }} sur {{ benevoles.creneaux }} créneau{{ benevoles.creneaux > 1 ? 'x' }}" />
+            {% endif %}
+            <twig:block name="footer">
+                <twig:Button href="{{ path('app_planning', {id: soiree.id}) }}" variant="secondary" size="sm">Planning</twig:Button>
+            </twig:block>
+        </twig:Card>
+
+        <twig:Card title="Guest-lists" id="module-guest-lists">
+            <p class="text-sm text-slate-300">
+                {{ guest_lists.personnes }} personne{{ guest_lists.personnes > 1 ? 's' }} sur {{ guest_lists.listes }} liste{{ guest_lists.listes > 1 ? 's' }}{% if guest_lists.arrives %} · {{ guest_lists.arrives }} arrivée{{ guest_lists.arrives > 1 ? 's' }}{% endif %}
+            </p>
+            <twig:block name="footer">
+                {% if peut_modifier %}
+                    <twig:Button href="{{ path('app_guest_lists', {id: soiree.id}) }}" variant="secondary" size="sm">Invités</twig:Button>
+                    <twig:Button href="{{ path('app_pointage', {id: soiree.id}) }}" variant="secondary" size="sm">Pointage</twig:Button>
+                {% endif %}
+            </twig:block>
+        </twig:Card>
+
+        {% if budget %}
+            <twig:Card title="Budget" id="module-budget">
+                <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                    <dt class="text-slate-400">Solde prévu</dt><dd class="text-right tabular-nums">{{ budget.soldePrevu|euros }}</dd>
+                    <dt class="text-slate-400">Solde réel</dt><dd class="text-right tabular-nums">{{ budget.soldeReel|euros }}</dd>
+                </dl>
+                {% if budget.lignesSansReel > 0 %}
+                    <p class="mt-2"><twig:Led statut="attention" libelle="{{ budget.lignesSansReel }} montant{{ budget.lignesSansReel > 1 ? 's' }} réel{{ budget.lignesSansReel > 1 ? 's' }} inconnu{{ budget.lignesSansReel > 1 ? 's' }}" /></p>
+                {% endif %}
+                <twig:block name="footer">
+                    <twig:Button href="{{ path('app_budget', {id: soiree.id}) }}" variant="secondary" size="sm">Budget</twig:Button>
+                    <twig:Button href="{{ path('app_bilan', {id: soiree.id}) }}" variant="secondary" size="sm">Bilan</twig:Button>
+                </twig:block>
+            </twig:Card>
+        {% endif %}
+    </div>
+{% endblock %}

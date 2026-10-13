@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ soiree ? 'Modifier · ' ~ soiree.nom : 'Nouvelle soirée' }}{% endblock %}
+
+{% block body %}
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree ? 'Modifier la soirée' : 'Nouvelle soirée' }}</h1>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'mt-6 flex flex-col gap-4'}}) }}
+        {{ form_errors(form) }}
+        <twig:Card title="La soirée">
+            <div class="flex flex-col gap-5">
+                <twig:Field :field="form.nom" placeholder="Warehouse #4" />
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <twig:Field :field="form.ouverture" />
+                    <twig:Field :field="form.fermeture" />
+                </div>
+                <twig:Field :field="form.jauge" />
+                <twig:Field :field="form.buvette" />
+                <twig:Field :field="form.artistesPayes" />
+            </div>
+        </twig:Card>
+
+        <twig:Card title="Lieu" id="lieu">
+            <div class="flex flex-col gap-5">
+                <twig:Field :field="form.lieu" />
+                <details class="rounded-lg border border-slate-800 p-4" {{ form.nouveauLieu.vars.submitted and form.nouveauLieu.nom.vars.value ? 'open' }}>
+                    <summary class="cursor-pointer text-sm font-medium">Créer un nouveau lieu</summary>
+                    <p class="mt-2 text-sm text-slate-400">Laissez « Lieu » vide ci-dessus pour utiliser celui-ci.</p>
+                    <div class="mt-4 flex flex-col gap-5">
+                        <twig:Field :field="form.nouveauLieu.nom" />
+                        <twig:Field :field="form.nouveauLieu.adresse" />
+                        <twig:Field :field="form.nouveauLieu.capacite" />
+                        <twig:Field :field="form.nouveauLieu.amenagePourPublic" />
+                    </div>
+                </details>
+            </div>
+        </twig:Card>
+
+        <div class="flex flex-col gap-2 sm:flex-row-reverse">
+            <twig:Button type="submit" size="lg" class="sm:flex-1">{{ soiree ? 'Enregistrer' : 'Créer la soirée' }}</twig:Button>
+            <twig:Button variant="ghost" size="lg" href="{{ soiree ? path('app_soiree', {id: soiree.id}) : path('app_collective') }}">Annuler</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

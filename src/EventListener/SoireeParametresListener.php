@@ -7,16 +7,18 @@ use App\Enum\SoireeParametre;
 use App\Event\SoireeParametresModifies;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\PostFlushEventArgs;
+use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * Publishes SoireeParametresModifies for every saved change of a soirée's
- * SoireeParametre, whatever code made it. Events are dispatched
- * after the flush, so listeners see the saved data.
+ * Publishes SoireeParametresModifies when a soirée is created, and for every
+ * saved change of one of its SoireeParametre, whatever code made it. Events
+ * are dispatched after the flush, so listeners see the saved data.
  */
+#[AsDoctrineListener(event: Events::postPersist)]
 #[AsDoctrineListener(event: Events::postUpdate)]
 #[AsDoctrineListener(event: Events::postFlush)]
 final class SoireeParametresListener implements ResetInterface
@@ -27,6 +29,17 @@ final class SoireeParametresListener implements ResetInterface
     public function __construct(
         private readonly EventDispatcherInterface $dispatcher,
     ) {
+    }
+
+    /**
+     * A new soirée: every parameter is new.
+     */
+    public function postPersist(PostPersistEventArgs $args): void
+    {
+        $soiree = $args->getObject();
+        if ($soiree instanceof Soiree && null !== $soiree->getId() && null !== $soiree->getCollective()->getId()) {
+            $this->pending[$soiree->getId()] = new SoireeParametresModifies($soiree->getId(), $soiree->getCollective()->getId(), SoireeParametre::cases());
+        }
     }
 
     public function postUpdate(PostUpdateEventArgs $args): void

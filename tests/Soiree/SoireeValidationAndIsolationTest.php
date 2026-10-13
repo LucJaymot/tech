@@ -22,16 +22,34 @@ final class SoireeValidationAndIsolationTest extends KernelTestCase
         self::bootKernel();
     }
 
-    public function testJaugeCannotExceedTheLieuCapacity(): void
+    public function testJaugeAboveTheLieuCapacityIsAWarningNotAnError(): void
     {
         $this->actAs('camille@example.com');
-        $soiree = $this->soiree()->setJauge(121);
+        $soiree = $this->soiree();
+        self::assertFalse($soiree->setJauge(120)->depasseCapacite());
 
-        $violations = static::getContainer()->get(ValidatorInterface::class)->validate($soiree);
+        $soiree->setJauge(121);
 
-        self::assertCount(1, $violations);
-        self::assertSame('jauge', $violations->get(0)->getPropertyPath());
-        self::assertSame('La jauge (121) dépasse la capacité du lieu (120).', $violations->get(0)->getMessage());
+        self::assertCount(0, static::getContainer()->get(ValidatorInterface::class)->validate($soiree));
+        self::assertTrue($soiree->depasseCapacite());
+    }
+
+    public function testClosingMustFollowTheOpeningWithin24Hours(): void
+    {
+        $this->actAs('camille@example.com');
+        $soiree = $this->soiree();
+        $validator = static::getContainer()->get(ValidatorInterface::class);
+
+        $soiree->setFermeture($soiree->getOuverture()->modify('+11 hours'));
+        self::assertCount(0, $validator->validate($soiree), '19:00 to 06:00 the next day');
+
+        foreach (['-1 hour' => 'La fermeture doit être après l\'ouverture.', '+0 minutes' => 'La fermeture doit être après l\'ouverture.', '+25 hours' => 'Une soirée dure 24 heures au plus.'] as $decalage => $message) {
+            $soiree->setFermeture($soiree->getOuverture()->modify($decalage));
+            $violations = $validator->validate($soiree);
+            self::assertCount(1, $violations, $decalage);
+            self::assertSame('fermeture', $violations->get(0)->getPropertyPath());
+            self::assertSame($message, $violations->get(0)->getMessage());
+        }
     }
 
     public function testLieuMustBelongToTheSameCollective(): void

@@ -1,8 +1,56 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Accueil{% endblock %}
+{% block title %}Accueil · {{ collective.name }}{% endblock %}
 
 {% block body %}
-    <h1 class="text-2xl font-bold sm:text-3xl">Accueil</h1>
-    <p class="mt-4 text-slate-300">Le projet est en place.</p>
+    <p class="text-sm text-slate-400">Tableau de bord</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ collective.name }}</h1>
+
+    <div class="mt-6 flex flex-col gap-4">
+        <twig:Card title="Prochaines soirées" id="prochaines-soirees">
+            {% if prochaines is empty %}
+                <twig:EmptyState title="Aucune soirée à venir" description="{{ peut_creer ? 'Créez la prochaine : ses démarches seront préparées automatiquement.' : 'Les soirées du collectif apparaîtront ici.' }}">
+                    {% if peut_creer %}
+                        <twig:Button href="{{ path('app_soiree_nouvelle') }}" id="nouvelle-soiree">Nouvelle soirée</twig:Button>
+                    {% endif %}
+                </twig:EmptyState>
+            {% else %}
+                <ul class="-my-2 divide-y divide-slate-800">
+                    {% for p in prochaines %}
+                        <li>
+                            <a href="{{ path('app_soiree', {id: p.soiree.id}) }}" class="flex items-center justify-between gap-4 py-3">
+                                <span class="min-w-0">
+                                    <span class="block truncate font-medium">{{ p.soiree.nom }}</span>
+                                    <span class="block text-sm text-slate-400">{{ p.soiree.date|date('d/m/Y') }} · {{ p.soiree.ouverture|date('H:i') }}{{ p.soiree.lieu ? ' · ' ~ p.soiree.lieu.nom }}</span>
+                                </span>
+                                <span class="shrink-0 font-doto text-2xl font-bold text-(--accent-lisible) tabular-nums">{{ p.compte_a_rebours }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </twig:Card>
+
+        <twig:Card title="Démarches à faire" id="demarches">
+            <ul class="-my-2 divide-y divide-slate-800">
+                {% for tache in taches %}
+                    <li class="py-3">
+                        <a href="{{ path('app_soiree', {id: tache.soiree.id}) }}" class="block">
+                            {% if tache.echeance < aujourdhui %}
+                                <twig:Led statut="bloquant" libelle="En retard depuis le {{ tache.echeance|date('d/m/Y') }}" />
+                            {% elseif tache.echeance <= aujourdhui|date_modify('+7 days') %}
+                                <twig:Led statut="attention" libelle="Avant le {{ tache.echeance|date('d/m/Y') }}" />
+                            {% else %}
+                                <twig:Led statut="ok" libelle="Avant le {{ tache.echeance|date('d/m/Y') }}" />
+                            {% endif %}
+                            <span class="mt-1 block font-medium">{{ tache.libelle }}</span>
+                            <span class="block text-sm text-slate-400">{{ tache.soiree.nom }}</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="py-3"><twig:Led statut="ok" libelle="Aucune démarche en attente" /></li>
+                {% endfor %}
+            </ul>
+        </twig:Card>
+    </div>
 {% endblock %}

@@ -72,7 +72,7 @@ final class SoireeParametresModifiesTest extends KernelTestCase
         $soiree = $this->soiree();
         $soiree->setNom('Concert d\'été')
             ->setSoutien(true)
-            ->setOuverture(new \DateTimeImmutable('20:00'))
+            ->setOuverture($soiree->getOuverture()->setTime(20, 0))
             // Same day and same values, new objects: not a change.
             ->setDate(new \DateTimeImmutable($soiree->getDate()->format('Y-m-d')))
             ->setJauge($soiree->getJauge())

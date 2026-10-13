@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Doto (SIL Open Font License), self-hosted: no request to Google Fonts. */
+@font-face {
+    font-family: "Doto";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("../fonts/doto-700-latin.woff2") format("woff2");
+}
+
+@theme {
+    --font-doto: "Doto", ui-monospace, monospace;
+}

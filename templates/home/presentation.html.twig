@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Caisson{% endblock %}
+
+{% block body %}
+    <section class="flex flex-col items-center py-10 text-center" id="presentation">
+        <img src="{{ asset('images/icone.png') }}" alt="" width="96" height="96" class="size-24 rounded-2xl">
+        <h1 class="mt-6 font-doto text-5xl font-bold tracking-widest text-(--accent-lisible)">CAISSON</h1>
+        <p class="mt-4 max-w-md text-lg text-slate-300">Préparer et vivre les soirées de votre collectif : line-up, bénévoles, guest-lists, budget et démarches, au même endroit.</p>
+        <twig:Button href="{{ path('app_login') }}" size="lg" class="mt-8">Recevoir mon lien de connexion</twig:Button>
+        <p class="mt-3 text-sm text-slate-400">Pas de mot de passe : un lien arrive par e-mail.</p>
+    </section>
+{% endblock %}

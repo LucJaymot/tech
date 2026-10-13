@@ -50,15 +50,17 @@ class Soiree implements CollectiveScopedInterface
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $date;
 
-    /** Doors open, on the soirée's date. */
-    #[ORM\Column(type: Types::TIME_IMMUTABLE)]
+    /** Doors open; its day is the soirée's date. */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $ouverture;
 
-    /** Closing time; earlier than the opening means after midnight. */
-    #[ORM\Column(type: Types::TIME_IMMUTABLE)]
+    /** After the opening, at most 24 hours later: possibly the next day. */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $fermeture;
 
-    #[ORM\ManyToOne]
+    /** Persisted with the soirée when created in its form. */
+    #[ORM\ManyToOne(cascade: ['persist'])]
+    #[Assert\Valid]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Lieu $lieu = null;
 
@@ -113,8 +115,11 @@ class Soiree implements CollectiveScopedInterface
         $base = (string) (new AsciiSlugger('fr'))->slug($nom)->lower()->truncate(60)->trimEnd('-');
         $this->slug = ('' === $base ? 'soiree' : $base).'-'.bin2hex(random_bytes(4));
         $this->date = $date->setTime(0, 0);
-        $this->ouverture = $ouverture;
-        $this->fermeture = $fermeture;
+        // Only the hours of $ouverture and $fermeture count: a closing hour not
+        // after the opening one is on the next day.
+        $this->ouverture = $this->date->setTime((int) $ouverture->format('H'), (int) $ouverture->format('i'));
+        $fermetureLe = $this->date->setTime((int) $fermeture->format('H'), (int) $fermeture->format('i'));
+        $this->fermeture = $fermetureLe <= $this->ouverture ? $fermetureLe->modify('+1 day') : $fermetureLe;
         $this->postes = new ArrayCollection();
         $this->lignesBudget = new ArrayCollection();
         $this->piecesJointes = new ArrayCollection();
@@ -125,21 +130,27 @@ class Soiree implements CollectiveScopedInterface
     #[Assert\Callback]
     public function validateLieu(ExecutionContextInterface $context): void
     {
-        if (null === $this->lieu) {
-            return;
-        }
-
-        if ($this->lieu->getCollective() !== $this->collective) {
+        if (null !== $this->lieu && $this->lieu->getCollective() !== $this->collective) {
             $context->buildViolation('Ce lieu n\'appartient pas au collectif.')->atPath('lieu')->addViolation();
         }
+    }
 
-        if (null !== $this->jauge && $this->jauge > $this->lieu->getCapacite()) {
-            $context->buildViolation('La jauge ({{ jauge }}) dépasse la capacité du lieu ({{ capacite }}).')
-                ->setParameter('{{ jauge }}', (string) $this->jauge)
-                ->setParameter('{{ capacite }}', (string) $this->lieu->getCapacite())
-                ->atPath('jauge')
-                ->addViolation();
+    #[Assert\Callback]
+    public function validateHoraires(ExecutionContextInterface $context): void
+    {
+        if ($this->fermeture <= $this->ouverture) {
+            $context->buildViolation('La fermeture doit être après l\'ouverture.')->atPath('fermeture')->addViolation();
+        } elseif ($this->fermeture > $this->ouverture->modify('+24 hours')) {
+            $context->buildViolation('Une soirée dure 24 heures au plus.')->atPath('fermeture')->addViolation();
         }
+    }
+
+    /**
+     * Above the venue's capacity: a warning for the organisers, not an error.
+     */
+    public function depasseCapacite(): bool
+    {
+        return null !== $this->jauge && null !== $this->lieu && $this->jauge > $this->lieu->getCapacite();
     }
 
     public function getId(): ?int
@@ -174,11 +185,17 @@ class Soiree implements CollectiveScopedInterface
         return $this->date;
     }
 
+    /**
+     * Moves the soirée to another day, opening and closing hours kept.
+     */
     public function setDate(\DateTimeImmutable $date): static
     {
         // Doctrine compares dates by reference: keep the same object when the day is unchanged.
         if ($date->format('Y-m-d') !== $this->date->format('Y-m-d')) {
+            $decalage = $this->date->diff($date->setTime(0, 0));
             $this->date = $date->setTime(0, 0);
+            $this->ouverture = $this->ouverture->add($decalage);
+            $this->fermeture = $this->fermeture->add($decalage);
         }
 
         return $this;
@@ -189,10 +206,16 @@ class Soiree implements CollectiveScopedInterface
         return $this->ouverture;
     }
 
+    /**
+     * Its day becomes the soirée's date.
+     */
     public function setOuverture(\DateTimeImmutable $ouverture): static
     {
-        if ($ouverture->format('H:i') !== $this->ouverture->format('H:i')) {
-            $this->ouverture = $ouverture;
+        if ($ouverture->format('Y-m-d H:i') !== $this->ouverture->format('Y-m-d H:i')) {
+            $this->ouverture = $ouverture->setTime((int) $ouverture->format('H'), (int) $ouverture->format('i'));
+        }
+        if ($ouverture->format('Y-m-d') !== $this->date->format('Y-m-d')) {
+            $this->date = $ouverture->setTime(0, 0);
         }
 
         return $this;
@@ -205,8 +228,8 @@ class Soiree implements CollectiveScopedInterface
 
     public function setFermeture(\DateTimeImmutable $fermeture): static
     {
-        if ($fermeture->format('H:i') !== $this->fermeture->format('H:i')) {
-            $this->fermeture = $fermeture;
+        if ($fermeture->format('Y-m-d H:i') !== $this->fermeture->format('Y-m-d H:i')) {
+            $this->fermeture = $fermeture->setTime((int) $fermeture->format('H'), (int) $fermeture->format('i'));
         }
 
         return $this;
@@ -214,7 +237,7 @@ class Soiree implements CollectiveScopedInterface
 
     public function fermeApresMinuit(): bool
     {
-        return $this->fermeture->format('H:i') <= $this->ouverture->format('H:i');
+        return $this->fermeture->format('Y-m-d') > $this->ouverture->format('Y-m-d');
     }
 
     public function getLieu(): ?Lieu

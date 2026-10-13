@@ -47,4 +47,23 @@ class SoireeRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return list<Soiree> the next $nombre soirées of $collective from $depuis, soonest first
+     */
+    public function findProchaines(Collective $collective, \DateTimeImmutable $depuis, int $nombre): array
+    {
+        return $this->createQueryBuilder('s')
+            ->addSelect('l')
+            ->leftJoin('s.lieu', 'l')
+            ->where('s.collective = :collective')
+            ->andWhere('s.date >= :depuis')
+            ->setParameter('collective', $collective)
+            ->setParameter('depuis', $depuis, Types::DATE_IMMUTABLE)
+            ->orderBy('s.date')
+            ->addOrderBy('s.ouverture')
+            ->setMaxResults($nombre)
+            ->getQuery()
+            ->getResult();
+    }
 }

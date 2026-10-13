@@ -7,7 +7,6 @@ use App\Entity\Passage;
 use App\Entity\Poste;
 use App\Entity\Soiree;
 use App\Obligations\Obligations;
-use App\Planning\Horaires;
 use App\Repository\PassageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -51,7 +50,7 @@ final class FeuilleDeRoute
             }
         }
 
-        [$ouverture, $fermeture] = Horaires::plage($soiree, $soiree->getOuverture()->format('H:i'), $soiree->getFermeture()->format('H:i'));
+        [$ouverture, $fermeture] = [$soiree->getOuverture(), $soiree->getFermeture()];
         $lieu = $soiree->getLieu();
 
         return new VueFeuilleDeRoute(

@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Collective;
 use App\Entity\Soiree;
 use App\Entity\TacheAdmin;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -24,6 +25,25 @@ class TacheAdminRepository extends ServiceEntityRepository
     public function findPourSoiree(Soiree $soiree): array
     {
         return $this->findBy(['soiree' => $soiree], ['echeance' => 'ASC', 'id' => 'ASC']);
+    }
+
+    /**
+     * Open tasks of $collective, overdue ones first as they are due earliest.
+     *
+     * @return list<TacheAdmin> with their soirées
+     */
+    public function findOuvertesDuCollectif(Collective $collective): array
+    {
+        return $this->createQueryBuilder('t')
+            ->addSelect('s')
+            ->join('t.soiree', 's')
+            ->where('t.collective = :collective')
+            ->andWhere('t.faiteLe IS NULL')
+            ->setParameter('collective', $collective)
+            ->orderBy('t.echeance', 'ASC')
+            ->addOrderBy('t.id', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     /**
