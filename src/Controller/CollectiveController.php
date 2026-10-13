@@ -37,6 +37,7 @@ final class CollectiveController extends AbstractController
             'invitations' => $canManage ? $invitations->findPending() : [],
             'soirees' => $soirees->findBy([], ['date' => 'ASC']),
             'can_view_budget' => null !== $collective && $this->isGranted(CollectiveVoter::VIEW_BUDGET, $collective),
+            'can_edit' => null !== $collective && $this->isGranted(CollectiveVoter::EDIT, $collective),
         ]);
     }
 

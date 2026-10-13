@@ -11,6 +11,8 @@ use App\Entity\Booking;
 use App\Entity\Collective;
 use App\Entity\Creneau;
 use App\Entity\Disponibilite;
+use App\Entity\GuestList;
+use App\Entity\Invite;
 use App\Entity\Lieu;
 use App\Entity\LigneBudget;
 use App\Entity\Membership;
@@ -36,6 +38,8 @@ class AppFixtures extends Fixture
 
     private User $theo;
 
+    private User $camille;
+
     public function __construct(
         private readonly UserPasswordHasherInterface $passwordHasher,
     ) {
@@ -57,6 +61,9 @@ class AppFixtures extends Fixture
             $users[$key] = $user;
             if ('theo' === $key) {
                 $this->theo = $user;
+            }
+            if ('camille' === $key) {
+                $this->camille = $user;
             }
         }
 
@@ -169,5 +176,18 @@ class AppFixtures extends Fixture
 
         $lilaBooking->setStatut('confirme');
         $kumoBooking->setStatut('declare_guso');
+
+        // Guest lists, with accented names to search at the door.
+        $lilaListe = GuestList::pourBooking($lilaBooking, $lilaBooking->getHospitalite()->invitations);
+        new Invite($lilaListe, 'Amélie Dupré', 1);
+        new Invite($lilaListe, 'Zoé Lambert');
+        $kumoListe = GuestList::pourBooking($kumoBooking, $kumoBooking->getHospitalite()->invitations);
+        new Invite($kumoListe, 'Hélène Pétillon', 1);
+        $camilleListe = GuestList::pourMembre($soiree, $this->camille, 2);
+        new Invite($camilleListe, 'Joël Œuvray');
+        foreach ([$lilaListe, $kumoListe, $camilleListe] as $liste) {
+            $manager->persist($liste);
+            array_map($manager->persist(...), $liste->getInvites()->toArray());
+        }
     }
 }

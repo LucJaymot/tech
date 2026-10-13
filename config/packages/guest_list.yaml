@@ -1,0 +1,4 @@
+parameters:
+    # Quota of a member's guest list on a soirée, in people (companions included).
+    # Artists' lists start from the invitations of their hospitality.
+    app.guest_list.quota_membre: 2

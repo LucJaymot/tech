@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Booking\FeuillesArtistes;
+use App\GuestList\LiensGuestList;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\ExpiredSignedUriException;
 use Symfony\Component\HttpFoundation\Exception\SignedUriException;
@@ -17,7 +18,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class FeuilleArtisteController extends AbstractController
 {
     #[Route('/feuille-artiste/{booking}', name: 'app_feuille_artiste', requirements: ['booking' => '\d+'], methods: ['GET'])]
-    public function show(int $booking, Request $request, UriSigner $uriSigner, FeuillesArtistes $feuilles): Response
+    public function show(int $booking, Request $request, UriSigner $uriSigner, FeuillesArtistes $feuilles, LiensGuestList $liensGuestList): Response
     {
         try {
             $uriSigner->verify($request);
@@ -29,7 +30,10 @@ final class FeuilleArtisteController extends AbstractController
 
         $feuille = $feuilles->feuille($booking) ?? throw $this->createNotFoundException();
 
-        return $this->renderPrivate('feuille_artiste/show.html.twig', ['feuille' => $feuille]);
+        return $this->renderPrivate('feuille_artiste/show.html.twig', [
+            'feuille' => $feuille,
+            'lien_guest_list' => $liensGuestList->lien($booking),
+        ]);
     }
 
     /**

@@ -1,0 +1,14 @@
+{# Add form. Expects: action (url or null for same url), token_id, restantes #}
+<form method="post" {% if action %}action="{{ action }}"{% endif %} class="flex flex-col gap-3" data-ajout-invite>
+    <input type="hidden" name="_token" value="{{ csrf_token(token_id) }}">
+    <div class="flex gap-2">
+        <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">Nom
+            <input type="text" name="nom" required maxlength="120" autocomplete="off" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base">
+        </label>
+        <label class="flex w-28 flex-col gap-1 text-sm">Accompagnants
+            <input type="number" name="accompagnants" min="0" max="{{ constant('App\\Entity\\Invite::ACCOMPAGNANTS_MAX') }}" value="0" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base">
+        </label>
+    </div>
+    <twig:Button type="submit" variant="secondary" block>Ajouter</twig:Button>
+    <p class="text-xs text-slate-400">{{ restantes }} place{{ restantes > 1 ? 's' }} restante{{ restantes > 1 ? 's' }}, accompagnants compris.</p>
+</form>

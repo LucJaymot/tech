@@ -104,7 +104,8 @@ final class FeuilleArtisteControllerTest extends WebTestCase
     public function testDefaultLinkLastsThirtyDays(): void
     {
         self::assertSame(1, preg_match('/_expiration=(\d+)/', $this->lien('DJ Kumo'), $matches));
-        self::assertEqualsWithDelta(time() + 30 * 86400, (int) $matches[1], 60);
+        // 30 calendar days: one more hour when the period crosses the end of summer time.
+        self::assertEqualsWithDelta(new \DateTimeImmutable('+30 days')->getTimestamp(), (int) $matches[1], 60);
     }
 
     private function lien(string $artiste, ?\DateTimeImmutable $expireLe = null): string

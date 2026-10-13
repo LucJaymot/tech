@@ -1,0 +1,19 @@
+{# Guests of one list. Expects: invites (id, nom, accompagnants, arrive), retirable, action (form url or null for same url), token_id #}
+<ul class="-my-2 divide-y divide-slate-800" data-guest-list>
+    {% for invite in invites %}
+        <li class="flex items-center justify-between gap-3 py-3">
+            <span>{{ invite.nom }}{% if invite.accompagnants %} <span class="text-slate-400">+{{ invite.accompagnants }}</span>{% endif %}</span>
+            {% if invite.arrive %}
+                <twig:Badge status="success" :dot="false">arrivé·e</twig:Badge>
+            {% elseif retirable %}
+                <form method="post" {% if action %}action="{{ action|replace({'__ID__': invite.id}) }}"{% endif %}>
+                    <input type="hidden" name="_token" value="{{ csrf_token(token_id) }}">
+                    {% if not action %}<input type="hidden" name="retirer" value="{{ invite.id }}">{% endif %}
+                    <twig:Button type="submit" variant="ghost" size="sm" aria-label="Retirer {{ invite.nom }}">Retirer</twig:Button>
+                </form>
+            {% endif %}
+        </li>
+    {% else %}
+        <li class="py-3 text-slate-400">Personne pour l'instant.</li>
+    {% endfor %}
+</ul>

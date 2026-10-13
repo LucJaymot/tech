@@ -40,8 +40,12 @@
                                     <p class="truncate font-medium">{{ soiree.nom }}</p>
                                     <p class="text-sm text-slate-400">{{ soiree.date|date('d/m/Y') }} · {{ soiree.statutEnum.label }}</p>
                                 </div>
-                                <div class="flex shrink-0 gap-2">
+                                <div class="flex shrink-0 flex-wrap justify-end gap-2">
                                     <twig:Button href="{{ path('app_planning', {id: soiree.id}) }}" variant="secondary" size="sm">Planning</twig:Button>
+                                    {% if can_edit %}
+                                        <twig:Button href="{{ path('app_guest_lists', {id: soiree.id}) }}" variant="secondary" size="sm">Invités</twig:Button>
+                                        <twig:Button href="{{ path('app_pointage', {id: soiree.id}) }}" variant="secondary" size="sm">Pointage</twig:Button>
+                                    {% endif %}
                                     {% if can_view_budget %}
                                         <twig:Button href="{{ path('app_budget', {id: soiree.id}) }}" variant="secondary" size="sm">Budget</twig:Button>
                                     {% endif %}

@@ -1,0 +1,20 @@
+{% extends 'feuille_artiste/_layout.html.twig' %}
+
+{% block title %}Guest list · {{ vue.artiste }}{% endblock %}
+
+{% block body %}
+    <p class="text-sm text-slate-400">Guest list · {{ vue.artiste }}</p>
+    <h1 class="text-2xl font-bold sm:text-3xl">{{ vue.soiree }}</h1>
+    <p class="mt-1 text-slate-300">{{ vue.date|date('d/m/Y') }} · {{ vue.quota - vue.restantes }} / {{ vue.quota }} personnes</p>
+
+    <twig:Card class="mt-6" title="Vos invités">
+        {{ include('guest_list/_invites.html.twig', {invites: vue.invites, retirable: vue.modifiable, action: null, token_id: token_id}) }}
+        {% if vue.modifiable %}
+            <div class="mt-4 border-t border-slate-800 pt-4">
+                {{ include('guest_list/_ajout.html.twig', {action: null, token_id: token_id, restantes: vue.restantes}) }}
+            </div>
+        {% else %}
+            <p class="mt-4 text-sm text-slate-400">La soirée est passée : la liste ne peut plus changer.</p>
+        {% endif %}
+    </twig:Card>
+{% endblock %}

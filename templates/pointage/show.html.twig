@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pointage · {{ soiree.nom }}{% endblock %}
+
+{# Door screen: nothing but the list, as large and contrasted as possible. #}
+{% block header %}{% endblock %}
+{% block navigation %}{% endblock %}
+
+{% block body %}
+    <div class="-mx-4 -mt-6 min-h-screen bg-black px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-8 text-white sm:-mx-6 sm:px-6"
+         data-controller="pointage"
+         data-pointage-soiree-value="{{ soiree.id }}"
+         data-pointage-liste-url-value="{{ path('app_pointage_invites', {id: soiree.id}) }}"
+         data-pointage-synchro-url-value="{{ path('app_pointage_synchronisation', {id: soiree.id}) }}"
+         data-pointage-csrf-value="{{ csrf_token(csrf_id) }}">
+        <div class="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-black px-4 pt-2 pb-4 sm:-mx-6 sm:px-6">
+            <div class="flex items-baseline justify-between gap-3">
+                <h1 class="text-2xl font-bold">{{ soiree.nom }}</h1>
+                <a href="{{ path('app_collective') }}" class="text-lg text-white underline underline-offset-4">Quitter</a>
+            </div>
+            <label for="recherche" class="sr-only">Rechercher un invité</label>
+            <input id="recherche" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search"
+                   placeholder="Nom de l'invité ou de la liste"
+                   data-pointage-target="recherche" data-action="input->pointage#rechercher"
+                   class="w-full rounded-xl border-4 border-white bg-black px-5 py-4 text-3xl font-bold text-white placeholder:text-neutral-400 focus:border-yellow-300 focus:outline-none">
+            <p class="text-xl font-bold" data-pointage-target="compteur"></p>
+            <p class="text-lg data-[etat=hors-ligne]:text-yellow-300" role="status" aria-live="polite" data-pointage-target="etat">Chargement…</p>
+        </div>
+
+        <ul class="flex flex-col gap-3" data-pointage-target="liste" aria-label="Invités"></ul>
+    </div>
+{% endblock %}
