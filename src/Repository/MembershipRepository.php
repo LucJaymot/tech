@@ -45,6 +45,18 @@ class MembershipRepository extends ServiceEntityRepository
         return $this->findOneBy(['user' => $user, 'collective' => $collective])?->getRole();
     }
 
+    public function countAdmins(Collective $collective): int
+    {
+        return (int) $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->andWhere('m.collective = :collective')
+            ->andWhere('m.role = :admin')
+            ->setParameter('collective', $collective)
+            ->setParameter('admin', MembershipRole::Admin)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     /**
      * Subject to the "collective" filter: call it with the filter disabled.
      */

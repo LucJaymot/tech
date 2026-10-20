@@ -6,6 +6,8 @@ use App\Repository\UserRepository;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DomCrawler\Form;
 
 /**
  * Relies on AppFixtures, see App\Tests\Collective\CollectiveIsolationTest.
@@ -109,6 +111,80 @@ final class CollectiveControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    public function testAdminChangesARoleAndRemovesAMember(): void
+    {
+        $client = $this->loggedInClient('camille@example.com');
+        $crawler = $client->request('GET', '/collectif');
+
+        $client->submit($crawler->filter('form[action="/collectif/membres/'.$this->membershipId('theo', 'jardin-des-lilas').'/role"]')->form(), ['role' => 'reader']);
+        self::assertResponseRedirects('/collectif#membres');
+        self::assertSame('reader', $this->role('theo', 'jardin-des-lilas'));
+
+        $crawler = $client->followRedirect();
+        self::assertSelectorTextContains('main', 'Théo Lambert est maintenant lecteur.');
+        $client->submit($this->formulaireRetirer($crawler, 'nora'));
+        self::assertResponseRedirects('/collectif#membres');
+        self::assertNull($this->role('nora', 'jardin-des-lilas'));
+        self::assertSame('admin', $this->role('nora', 'atelier-velo'), 'her other collective is untouched');
+
+        $client->followRedirect();
+        self::assertSelectorCount(3, '#membres > li');
+    }
+
+    public function testTheLastAdminCanNeitherBeDemotedNorLeave(): void
+    {
+        $client = $this->loggedInClient('camille@example.com');
+        $crawler = $client->request('GET', '/collectif');
+        $camille = $this->membershipId('camille', 'jardin-des-lilas');
+
+        $client->submit($crawler->filter('form[action="/collectif/membres/'.$camille.'/role"]')->form(), ['role' => 'member']);
+        self::assertResponseRedirects('/collectif#membres');
+        $crawler = $client->followRedirect();
+        self::assertSelectorTextContains('main', 'Le collectif doit garder au moins un administrateur.');
+
+        $client->submit($this->formulaireRetirer($crawler, 'camille'));
+        self::assertResponseRedirects('/collectif#membres');
+        self::assertSame('admin', $this->role('camille', 'jardin-des-lilas'));
+
+        // With a second admin, she can step down.
+        $client->submit($client->followRedirect()->filter('form[action="/collectif/membres/'.$this->membershipId('nora', 'jardin-des-lilas').'/role"]')->form(), ['role' => 'admin']);
+        $client->submit($client->followRedirect()->filter('form[action="/collectif/membres/'.$camille.'/role"]')->form(), ['role' => 'member']);
+        self::assertSame('member', $this->role('camille', 'jardin-des-lilas'));
+    }
+
+    public function testAMemberCanLeaveButNotManageOthers(): void
+    {
+        $client = $this->loggedInClient('theo@example.com');
+        $crawler = $client->request('GET', '/collectif');
+        self::assertSelectorNotExists('#membres select');
+        self::assertSelectorCount(1, '#membres form');
+        $token = $crawler->filter('#membres input[name="_token"]')->attr('value');
+
+        $client->request('POST', '/collectif/membres/'.$this->membershipId('ines', 'jardin-des-lilas').'/role', ['_token' => $token, 'role' => 'admin']);
+        self::assertResponseStatusCodeSame(403);
+        $client->request('POST', '/collectif/membres/'.$this->membershipId('ines', 'jardin-des-lilas').'/retirer', ['_token' => $token]);
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame('reader', $this->role('ines', 'jardin-des-lilas'));
+
+        $client->submit($this->formulaireRetirer($crawler, 'theo'));
+        self::assertResponseRedirects('/');
+        self::assertNull($this->role('theo', 'jardin-des-lilas'));
+        $client->followRedirect();
+        self::assertSelectorTextContains('main', 'Vous n\'êtes membre d\'aucun collectif');
+    }
+
+    public function testMembersOfAnotherCollectiveAreNotFound(): void
+    {
+        $client = $this->loggedInClient('camille@example.com');
+        $crawler = $client->request('GET', '/collectif');
+        $token = $crawler->filter('#membres input[name="_token"]')->attr('value');
+
+        // Camille is admin of the Lilas, active here; Hugo is in the Atelier vélo.
+        $client->request('POST', '/collectif/membres/'.$this->membershipId('hugo', 'atelier-velo').'/retirer', ['_token' => $token]);
+        self::assertResponseStatusCodeSame(404);
+        self::assertSame('member', $this->role('hugo', 'atelier-velo'));
+    }
+
     public function testAnonymousIsSentToLogin(): void
     {
         $client = static::createClient();
@@ -133,6 +209,29 @@ final class CollectiveControllerTest extends WebTestCase
         self::assertIsString($content);
 
         return $content;
+    }
+
+    private function formulaireRetirer(Crawler $crawler, string $user): Form
+    {
+        return $crawler->filter('form[action="/collectif/membres/'.$this->membershipId($user, 'jardin-des-lilas').'/retirer"]')->form();
+    }
+
+    private function membershipId(string $user, string $slug): int
+    {
+        return (int) static::getContainer()->get(Connection::class)->fetchOne(
+            'SELECT m.id FROM membership m JOIN "user" u ON u.id = m.user_id JOIN collective c ON c.id = m.collective_id WHERE u.email = ? AND c.slug = ?',
+            [$user.'@example.com', $slug],
+        );
+    }
+
+    private function role(string $user, string $slug): ?string
+    {
+        $role = static::getContainer()->get(Connection::class)->fetchOne(
+            'SELECT m.role FROM membership m JOIN "user" u ON u.id = m.user_id JOIN collective c ON c.id = m.collective_id WHERE u.email = ? AND c.slug = ?',
+            [$user.'@example.com', $slug],
+        );
+
+        return false === $role ? null : $role;
     }
 
     private function collectiveId(string $slug): int

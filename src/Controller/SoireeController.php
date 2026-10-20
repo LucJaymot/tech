@@ -12,10 +12,13 @@ use App\Soiree\ResumeSoiree;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Workflow\WorkflowInterface;
 
 /**
  * Soirées of other collectives are not found (collective filter), hence a
@@ -53,7 +56,7 @@ final class SoireeController extends AbstractController
     }
 
     #[Route('/soirees/{id}', name: 'app_soiree', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function show(Soiree $soiree, ResumeSoiree $resume): Response
+    public function show(Soiree $soiree, ResumeSoiree $resume, #[Target('soiree')] WorkflowInterface $workflow): Response
     {
         $this->denyAccessUnlessGranted(SoireeVoter::VIEW, $soiree);
         $voitBudget = $this->isGranted(CollectiveVoter::VIEW_BUDGET, $soiree->getCollective());
@@ -68,7 +71,27 @@ final class SoireeController extends AbstractController
             'guest_lists' => $resume->guestLists($soiree),
             'budget' => $voitBudget ? $resume->budget($soiree) : null,
             'peut_modifier' => $this->isGranted(SoireeVoter::EDIT, $soiree),
+            'peut_annuler' => $workflow->can($soiree, 'annuler'),
         ]);
+    }
+
+    /**
+     * Its open tasks stay on its page but leave the reminders and the home page.
+     */
+    #[Route('/soirees/{id}/annuler', name: 'app_soiree_annuler', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsCsrfTokenValid('annuler-soiree')]
+    public function annuler(Soiree $soiree, #[Target('soiree')] WorkflowInterface $workflow, EntityManagerInterface $entityManager): Response
+    {
+        // Role and status are checked by the workflow guard.
+        if (!$workflow->can($soiree, 'annuler')) {
+            throw $this->createAccessDeniedException('This soirée cannot be cancelled.');
+        }
+
+        $workflow->apply($soiree, 'annuler');
+        $entityManager->flush();
+        $this->addFlash('success', 'Soirée annulée.');
+
+        return $this->redirectToRoute('app_soiree', ['id' => $soiree->getId()]);
     }
 
     /**

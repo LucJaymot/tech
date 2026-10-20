@@ -6,6 +6,7 @@ use App\Collective\ActiveCollective;
 use App\Entity\Booking;
 use App\Entity\Passage;
 use App\Entity\Soiree;
+use App\Enum\SoireeStatut;
 use App\Repository\PassageRepository;
 use App\Repository\SoireeRepository;
 
@@ -56,6 +57,7 @@ final class PagesPubliques
                     'artistes' => array_values($p->getBookings()->map(static fn (Booking $b): string => $b->getArtiste()->getNom())->toArray()),
                 ], $this->passages->findTimetable($soiree)),
                 visuelGenereLe: $this->visuels->genereLe($soiree, FormatVisuel::Carre),
+                annulee: SoireeStatut::Annulee === $soiree->getStatutEnum(),
             );
         });
     }

@@ -32,12 +32,33 @@ final class SoireeWorkflowTest extends KernelTestCase
 
         $this->cocherLesTachesApresSoiree($soiree);
         foreach (['confirmer' => 'confirmee', 'terminer' => 'terminee', 'faire_bilan' => 'bilan_fait'] as $transition => $statut) {
-            self::assertSame([$transition], $this->enabledTransitions($soiree));
+            self::assertSame('faire_bilan' === $transition ? [$transition] : [$transition, 'annuler'], $this->enabledTransitions($soiree));
             $this->workflow()->apply($soiree, $transition);
             self::assertSame($statut, $soiree->getStatut());
         }
 
         self::assertSame([], $this->enabledTransitions($soiree));
+    }
+
+    public function testAdminCancelsBeforeTheSoireeIsOver(): void
+    {
+        $this->actAs('camille@example.com');
+        $soiree = $this->soiree();
+        $this->workflow()->apply($soiree, 'confirmer');
+        $this->workflow()->apply($soiree, 'annuler');
+
+        self::assertSame('annulee', $soiree->getStatut());
+        self::assertSame([], $this->enabledTransitions($soiree), 'final');
+    }
+
+    public function testATerminatedSoireeCannotBeCancelled(): void
+    {
+        $this->actAs('camille@example.com');
+        $soiree = $this->soiree();
+        $this->workflow()->apply($soiree, 'confirmer');
+        $this->workflow()->apply($soiree, 'terminer');
+
+        self::assertFalse($this->workflow()->can($soiree, 'annuler'));
     }
 
     public function testBilanWaitsForTheTasksDueAfterTheSoiree(): void

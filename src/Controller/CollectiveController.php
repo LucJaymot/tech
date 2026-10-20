@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Collective\ActiveCollective;
+use App\Collective\Membres;
+use App\Entity\Membership;
 use App\Entity\User;
+use App\Enum\MembershipRole;
 use App\Enum\StyleTitres;
 use App\Repository\InvitationRepository;
 use App\Repository\MembershipRepository;
@@ -16,6 +19,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
@@ -46,6 +50,7 @@ final class CollectiveController extends AbstractController
             'invitations' => $canManage ? $invitations->findPending() : [],
             'cle_push' => $clePush,
             'styles_titres' => StyleTitres::cases(),
+            'roles' => MembershipRole::cases(),
         ]);
     }
 
@@ -88,6 +93,52 @@ final class CollectiveController extends AbstractController
         $this->addFlash('success', 'Identité visuelle enregistrée.');
 
         return $this->redirectToRoute('app_collective', ['_fragment' => 'identite']);
+    }
+
+    #[Route('/collectif/membres/{id}/role', name: 'app_collective_membre_role', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsCsrfTokenValid('membre')]
+    public function role(Membership $membership, Request $request, Membres $membres): Response
+    {
+        // Filtered: memberships of other collectives are not found.
+        $this->denyAccessUnlessGranted(CollectiveVoter::MANAGE_MEMBERS, $membership->getCollective());
+        $role = MembershipRole::tryFrom($request->request->getString('role')) ?? throw new BadRequestHttpException('Unknown role.');
+
+        if ($membres->changerRole($membership, $role)) {
+            $this->addFlash('success', \sprintf('%s est maintenant %s.', $membership->getUser()->getDisplayName(), mb_strtolower($role->label())));
+        } else {
+            $this->addFlash('error', 'Le collectif doit garder au moins un administrateur.');
+        }
+
+        return $this->redirectToRoute('app_collective', ['_fragment' => 'membres']);
+    }
+
+    /**
+     * Admins remove anyone; every member can leave.
+     */
+    #[Route('/collectif/membres/{id}/retirer', name: 'app_collective_membre_retirer', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsCsrfTokenValid('membre')]
+    public function retirer(Membership $membership, Membres $membres, #[CurrentUser] User $user): Response
+    {
+        $quitte = $membership->getUser() === $user;
+        if (!$quitte) {
+            $this->denyAccessUnlessGranted(CollectiveVoter::MANAGE_MEMBERS, $membership->getCollective());
+        }
+
+        if (!$membres->retirer($membership)) {
+            $this->addFlash('error', 'Le collectif doit garder au moins un administrateur.');
+
+            return $this->redirectToRoute('app_collective', ['_fragment' => 'membres']);
+        }
+
+        if ($quitte) {
+            $this->addFlash('success', \sprintf('Vous avez quitté %s.', $membership->getCollective()->getName()));
+
+            return $this->redirectToRoute('app_home');
+        }
+
+        $this->addFlash('success', \sprintf('%s a été retiré du collectif.', $membership->getUser()->getDisplayName()));
+
+        return $this->redirectToRoute('app_collective', ['_fragment' => 'membres']);
     }
 
     #[Route('/collectif/actif', name: 'app_collective_switch', methods: ['POST'])]

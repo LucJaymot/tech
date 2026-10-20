@@ -123,6 +123,22 @@ final class RetroplanningTest extends KernelTestCase
         self::assertSame([], $this->emails());
     }
 
+    public function testCancelledSoireesAreNeitherRemindedNorCounted(): void
+    {
+        $soiree = $this->soiree();
+        $soiree->setStatut('annulee');
+        $this->entityManager()->flush();
+        $annee = (int) $soiree->getDate()->format('Y');
+
+        static::mockTime($soiree->getDate()->modify('-22 days')->format('Y-m-d 07:00'));
+        static::getContainer()->get(Rappels::class)->quotidiens(new RappelsQuotidiens());
+        static::getContainer()->get(Rappels::class)->hebdomadaire(new RecapitulatifHebdomadaire());
+
+        self::assertSame([], $this->emails());
+        self::assertSame(0, static::getContainer()->get(CompteursAnnuels::class)->pour($soiree->getCollective(), $annee)[1]->nombre);
+        self::assertSame([], static::getContainer()->get(TacheAdminRepository::class)->findOuvertesDuCollectif($soiree->getCollective()), 'not on the home page');
+    }
+
     public function testWeeklySummaryListsTasksDueWithin30DaysAndOverdueOnes(): void
     {
         $soiree = $this->soiree();

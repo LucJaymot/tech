@@ -23,6 +23,7 @@ final class SoireeVoter extends Voter
     public const string CONFIRMER = 'SOIREE_CONFIRMER';
     public const string TERMINER = 'SOIREE_TERMINER';
     public const string FAIRE_BILAN = 'SOIREE_FAIRE_BILAN';
+    public const string ANNULER = 'SOIREE_ANNULER';
 
     private const array ALLOWED_ROLES = [
         self::VIEW => [MembershipRole::Admin, MembershipRole::Member, MembershipRole::Reader],
@@ -30,6 +31,7 @@ final class SoireeVoter extends Voter
         self::CONFIRMER => [MembershipRole::Admin],
         self::TERMINER => [MembershipRole::Admin, MembershipRole::Member],
         self::FAIRE_BILAN => [MembershipRole::Admin],
+        self::ANNULER => [MembershipRole::Admin],
     ];
 
     public function __construct(

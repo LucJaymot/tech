@@ -13,14 +13,35 @@
             <twig:Card title="Membres" description="{{ memberships|length }} membre{{ memberships|length > 1 ? 's' }}">
                 <ul class="-my-2 divide-y divide-slate-800" id="membres">
                     {% for membership in memberships %}
-                        <li class="flex items-center justify-between gap-3 py-3">
+                        {% set moi = membership.user == app.user %}
+                        <li class="flex flex-wrap items-center justify-between gap-3 py-3">
                             <div class="min-w-0">
-                                <p class="truncate font-medium">{{ membership.user.displayName }}</p>
+                                <p class="truncate font-medium">{{ membership.user.displayName }}{% if moi %} <span class="text-sm font-normal text-slate-400">(vous)</span>{% endif %}</p>
                                 <p class="truncate text-sm text-slate-400">{{ membership.user.email }}</p>
                             </div>
-                            <twig:Badge status="{{ {admin: 'info', member: 'success', reader: 'neutral'}[membership.role.value] }}" :dot="false">
-                                {{ membership.role.label }}
-                            </twig:Badge>
+                            <div class="flex flex-wrap items-center gap-2">
+                                {% if can_manage %}
+                                    <form method="post" action="{{ path('app_collective_membre_role', {id: membership.id}) }}" class="flex items-center gap-2">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('membre') }}">
+                                        <select name="role" aria-label="Rôle de {{ membership.user.displayName }}" class="min-h-11 rounded border border-slate-700 bg-slate-900 px-2 text-sm text-slate-100">
+                                            {% for role in roles %}
+                                                <option value="{{ role.value }}" {{ role == membership.role ? 'selected' }}>{{ role.label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <twig:Button type="submit" variant="secondary" size="sm">Appliquer</twig:Button>
+                                    </form>
+                                {% else %}
+                                    <twig:Badge status="{{ {admin: 'info', member: 'success', reader: 'neutral'}[membership.role.value] }}" :dot="false">
+                                        {{ membership.role.label }}
+                                    </twig:Badge>
+                                {% endif %}
+                                {% if can_manage or moi %}
+                                    <form method="post" action="{{ path('app_collective_membre_retirer', {id: membership.id}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('membre') }}">
+                                        <twig:Button type="submit" variant="ghost" size="sm" aria-label="{{ moi ? 'Quitter le collectif' : 'Retirer ' ~ membership.user.displayName ~ ' du collectif' }}">{{ moi ? 'Quitter' : 'Retirer' }}</twig:Button>
+                                    </form>
+                                {% endif %}
+                            </div>
                         </li>
                     {% endfor %}
                 </ul>

@@ -11,6 +11,7 @@ enum SoireeStatut: string
     case Confirmee = 'confirmee';
     case Terminee = 'terminee';
     case BilanFait = 'bilan_fait';
+    case Annulee = 'annulee';
 
     public function label(): string
     {
@@ -19,6 +20,7 @@ enum SoireeStatut: string
             self::Confirmee => 'Confirmée',
             self::Terminee => 'Terminée',
             self::BilanFait => 'Bilan fait',
+            self::Annulee => 'Annulée',
         };
     }
 }

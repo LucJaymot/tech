@@ -87,6 +87,37 @@ final class SoireeControllerTest extends WebTestCase
         self::assertSelectorExists('#module-budget');
     }
 
+    public function testAdminCancelsTheSoireeAndThePublicPageSaysSo(): void
+    {
+        $slug = $this->soiree()->getSlug();
+        $this->login('camille@example.com');
+        $crawler = $this->client->request('GET', $this->url());
+
+        $this->client->submit($crawler->selectButton('Annuler la soirée')->form());
+        self::assertResponseRedirects($this->url());
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('#statut', 'Annulée');
+        self::assertSelectorExists('#statut [data-led="bloquant"]');
+        self::assertSelectorNotExists('#annuler');
+
+        $this->client->request('GET', '/');
+        self::assertSelectorTextNotContains('main', 'Concert de printemps', 'left out of the next soirées and open tasks');
+
+        $this->client->request('GET', '/s/'.$slug);
+        self::assertSelectorTextContains('#annulee', 'Cette soirée est annulée.');
+    }
+
+    public function testOnlyAdminsSeeTheCancelButton(): void
+    {
+        // The workflow guard itself is covered by App\Tests\Soiree\SoireeWorkflowTest.
+        $url = $this->url();
+        $this->login('theo@example.com');
+        $this->client->request('GET', $url);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('#annuler');
+    }
+
     public function testSoireesPageListsUpcomingThenPastAndLinksEachToItsPage(): void
     {
         $concert = $this->soiree();

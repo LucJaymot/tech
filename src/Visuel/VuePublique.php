@@ -29,6 +29,7 @@ final readonly class VuePublique
         public array $timetable,
         /** Unix time of the square visual, null until generated. */
         public ?int $visuelGenereLe,
+        public bool $annulee,
     ) {
     }
 }

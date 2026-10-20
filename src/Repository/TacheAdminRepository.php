@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Collective;
 use App\Entity\Soiree;
 use App\Entity\TacheAdmin;
+use App\Enum\SoireeStatut;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
@@ -29,6 +30,7 @@ class TacheAdminRepository extends ServiceEntityRepository
 
     /**
      * Open tasks of $collective, overdue ones first as they are due earliest.
+     * Cancelled soirées are left out here and in the reminders below.
      *
      * @return list<TacheAdmin> with their soirées
      */
@@ -39,6 +41,8 @@ class TacheAdminRepository extends ServiceEntityRepository
             ->join('t.soiree', 's')
             ->where('t.collective = :collective')
             ->andWhere('t.faiteLe IS NULL')
+            ->andWhere('s.statut != :annulee')
+            ->setParameter('annulee', SoireeStatut::Annulee->value)
             ->setParameter('collective', $collective)
             ->orderBy('t.echeance', 'ASC')
             ->addOrderBy('t.id', 'ASC')
@@ -78,6 +82,8 @@ class TacheAdminRepository extends ServiceEntityRepository
             ->join('t.soiree', 's')
             ->where('t.faiteLe IS NULL')
             ->andWhere('t.echeance IN (:echeances)')
+            ->andWhere('s.statut != :annulee')
+            ->setParameter('annulee', SoireeStatut::Annulee->value)
             ->setParameter('echeances', array_map(static fn (\DateTimeImmutable $d): string => $d->format('Y-m-d'), $echeances))
             ->orderBy('t.echeance', 'ASC')
             ->addOrderBy('t.id', 'ASC')
@@ -97,6 +103,8 @@ class TacheAdminRepository extends ServiceEntityRepository
             ->join('t.soiree', 's')
             ->where('t.faiteLe IS NULL')
             ->andWhere('t.echeance <= :jusquau')
+            ->andWhere('s.statut != :annulee')
+            ->setParameter('annulee', SoireeStatut::Annulee->value)
             ->setParameter('jusquau', $jusquau, Types::DATE_IMMUTABLE)
             ->orderBy('t.echeance', 'ASC')
             ->addOrderBy('t.id', 'ASC')
