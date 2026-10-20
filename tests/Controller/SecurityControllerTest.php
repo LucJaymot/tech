@@ -34,6 +34,8 @@ final class SecurityControllerTest extends WebTestCase
         $email = $this->lastEmail();
         self::assertEmailAddressContains($email, 'To', 'camille@example.com');
         self::assertEmailHtmlBodyContains($email, 'Me connecter');
+        self::assertEmailHtmlBodyContains($email, 'http://localhost/confidentialite');
+        self::assertEmailTextBodyContains($email, 'http://localhost/confidentialite');
         $link = $this->extractLink($email);
 
         // GET only shows a confirmation page, so prefetching scanners don't log in.

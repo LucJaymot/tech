@@ -36,6 +36,7 @@ final class LineUpController extends AbstractController
         'signer_contrat' => 'Contrat signé',
         'declarer_guso' => 'Déclaré au Guso',
         'payer' => 'Marquer payé',
+        'annuler' => 'Annuler',
     ];
 
     public function __construct(
@@ -95,6 +96,10 @@ final class LineUpController extends AbstractController
     public function modifier(Booking $booking, Request $request, EntityManagerInterface $entityManager): Response
     {
         $this->denyAccessUnlessGranted(BookingVoter::EDIT, $booking);
+        // Cancelled: editing its hours would put it back on the timetable.
+        if (BookingStatut::Annule === $booking->getStatutEnum()) {
+            throw $this->createNotFoundException();
+        }
 
         $form = $this->createForm(ProgrammationType::class, $booking, ['soiree' => $booking->getSoiree(), 'edition' => true]);
         $form->handleRequest($request);

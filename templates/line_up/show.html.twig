@@ -28,7 +28,7 @@
     </twig:Card>
 
     {% set token = csrf_token('line-up') %}
-    {% set statuts = {contacte: 'neutral', negociation: 'warning', confirme: 'info', contrat_signe: 'info', declare_guso: 'info', paye: 'success'} %}
+    {% set statuts = {contacte: 'neutral', negociation: 'warning', confirme: 'info', contrat_signe: 'info', declare_guso: 'info', paye: 'success', annule: 'danger'} %}
     <section class="mt-8 flex flex-col gap-3" aria-labelledby="artistes-titre">
         <h2 class="etiquette" id="artistes-titre">Artistes · {{ programmes|length }}</h2>
         <ul class="flex flex-col gap-3" id="artistes">
@@ -69,11 +69,17 @@
                             {% for transition in p.transitions %}
                                 <form method="post" action="{{ path('app_line_up_statut', {id: booking.id, transition: transition}) }}">
                                     <input type="hidden" name="_token" value="{{ token }}">
-                                    <twig:Button type="submit" size="sm">{{ transitions[transition] }}</twig:Button>
+                                    {% if transition == 'annuler' %}
+                                        <twig:Button type="submit" variant="ghost" size="sm" aria-label="Annuler {{ artiste.nom }} (désistement)">{{ transitions[transition] }}</twig:Button>
+                                    {% else %}
+                                        <twig:Button type="submit" size="sm">{{ transitions[transition] }}</twig:Button>
+                                    {% endif %}
                                 </form>
                             {% endfor %}
-                            <twig:Button href="{{ path('app_line_up_modifier', {id: booking.id}) }}" variant="secondary" size="sm">Modifier</twig:Button>
-                            <twig:Button href="{{ p.lien_feuille }}" variant="secondary" size="sm" target="_blank" rel="noopener" data-lien-feuille>Feuille artiste</twig:Button>
+                            {% if booking.statut != 'annule' %}
+                                <twig:Button href="{{ path('app_line_up_modifier', {id: booking.id}) }}" variant="secondary" size="sm">Modifier</twig:Button>
+                                <twig:Button href="{{ p.lien_feuille }}" variant="secondary" size="sm" target="_blank" rel="noopener" data-lien-feuille>Feuille artiste</twig:Button>
+                            {% endif %}
                             {% if p.retirable %}
                                 <form method="post" action="{{ path('app_line_up_retirer', {id: booking.id}) }}" class="ml-auto">
                                     <input type="hidden" name="_token" value="{{ token }}">

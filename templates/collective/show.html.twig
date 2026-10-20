@@ -122,6 +122,23 @@
         </div>
     {% endif %}
 
+    <twig:Card title="Mon compte" description="{{ app.user.email }}" id="compte" class="mt-8">
+        <form method="post" action="{{ path('app_compte_nom') }}" class="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="_token" value="{{ csrf_token('compte') }}">
+            <label class="flex grow flex-col gap-1 text-sm">
+                Nom affiché
+                <input type="text" name="nom" value="{{ app.user.displayName }}" required maxlength="100" autocomplete="name" class="rounded border border-slate-700 bg-slate-900 px-3 py-2.5 text-slate-100">
+            </label>
+            <twig:Button type="submit" size="sm">Enregistrer</twig:Button>
+        </form>
+        <form method="post" action="{{ path('app_compte_supprimer') }}" class="mt-6 flex flex-col gap-3 border-t border-slate-800 pt-6">
+            <input type="hidden" name="_token" value="{{ csrf_token('supprimer-compte') }}">
+            <p class="text-sm text-slate-400">Supprime votre compte, vos adhésions, vos débriefings et vos guest-lists. Le reste de ce que vous avez saisi reste dans les collectifs, sans votre nom.</p>
+            <label class="flex min-h-11 items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="confirmer" value="1" required class="size-5"> Je veux supprimer définitivement mon compte</label>
+            <div><twig:Button type="submit" variant="danger" size="sm">Supprimer mon compte</twig:Button></div>
+        </form>
+    </twig:Card>
+
     <form method="post" action="{{ path('app_logout') }}" class="mt-8">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}" data-controller="csrf-protection">
         <twig:Button type="submit" variant="ghost" block>Se déconnecter</twig:Button>

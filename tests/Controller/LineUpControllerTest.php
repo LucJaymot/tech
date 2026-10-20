@@ -175,17 +175,45 @@ final class LineUpControllerTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/soirees/'.$concert->getId().'/line-up');
         $carte = $crawler->filter('#booking-'.$nadia->getId());
-        self::assertSame(['Passer en négociation'], $carte->filter('form[action*="/statut/"] button')->each(static fn ($b): string => $b->text()));
+        self::assertSame(['Passer en négociation', 'Annuler'], $carte->filter('form[action*="/statut/"] button')->each(static fn ($b): string => $b->text()));
         $this->client->submit($carte->selectButton('Passer en négociation')->form());
         $this->client->followRedirect();
         self::assertSelectorTextContains('#booking-'.$nadia->getId(), 'En négociation');
 
         // The Guso declaration and the payment are for admins.
         $kumo = $this->booking($concert, 'DJ Kumo');
-        self::assertCount(0, $this->client->request('GET', '/soirees/'.$concert->getId().'/line-up')->filter('#booking-'.$kumo->getId().' form[action*="/statut/"]'));
+        self::assertSame(['Annuler'], $this->client->request('GET', '/soirees/'.$concert->getId().'/line-up')->filter('#booking-'.$kumo->getId().' form[action*="/statut/"] button')->each(static fn ($b): string => $b->text()));
         $this->login('camille@example.com');
         $boutons = $this->client->request('GET', '/soirees/'.$concert->getId().'/line-up')->filter('#booking-'.$kumo->getId().' form[action*="/statut/"] button');
-        self::assertSame(['Marquer payé'], $boutons->each(static fn ($b): string => $b->text()));
+        self::assertSame(['Marquer payé', 'Annuler'], $boutons->each(static fn ($b): string => $b->text()));
+    }
+
+    public function testACancelledArtistLeavesTimetableBudgetAndLinksButKeepsItsHistory(): void
+    {
+        $concert = $this->soiree('Concert de printemps');
+        $lila = $this->booking($concert, 'Lila Moon');
+        self::assertNotNull($lila->getPassage());
+        self::assertNotNull($lila->getLigneBudget());
+        $this->login('theo@example.com');
+
+        $crawler = $this->client->request('GET', '/soirees/'.$concert->getId().'/line-up');
+        $carte = $crawler->filter('#booking-'.$lila->getId());
+        $lienFeuille = (string) $carte->filter('[data-lien-feuille]')->attr('href');
+        $this->client->submit($carte->selectButton('Annuler')->form());
+        $crawler = $this->client->followRedirect();
+
+        self::assertSelectorTextContains('#booking-'.$lila->getId(), 'Annulé');
+        self::assertCount(0, $crawler->filter('#booking-'.$lila->getId().' form[action*="/statut/"], #booking-'.$lila->getId().' [data-lien-feuille]'));
+        $lila = $this->booking($this->soiree('Concert de printemps'), 'Lila Moon');
+        self::assertNull($lila->getPassage(), 'off the timetable');
+        self::assertNull($lila->getLigneBudget(), 'off the budget');
+        self::assertSame('annuler', $lila->getTransitions()->last()->getTransition());
+
+        $this->client->request('GET', '/line-up/'.$lila->getId().'/modifier');
+        self::assertResponseStatusCodeSame(404);
+        $this->client->getCookieJar()->clear();
+        $this->client->request('GET', $lienFeuille);
+        self::assertResponseStatusCodeSame(404);
     }
 
     public function testOnlyArtistsNotYetConfirmedCanBeRemoved(): void

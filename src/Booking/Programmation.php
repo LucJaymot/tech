@@ -5,6 +5,8 @@ namespace App\Booking;
 use App\Entity\Booking;
 use App\Entity\Passage;
 use App\Planning\Horaires;
+use Symfony\Component\Workflow\Attribute\AsEnteredListener;
+use Symfony\Component\Workflow\Event\EnteredEvent;
 
 /**
  * Places a booking in its soirée's timetable. The same hours as an existing
@@ -61,6 +63,20 @@ final class Programmation
         $booking->setPassage(null);
         $this->retirerSiVide($passage);
         $booking->getSoiree()->getBookings()->removeElement($booking);
+    }
+
+    /**
+     * A cancelled artist leaves the timetable, hence the public page, visuals and run sheet.
+     *
+     * @param EnteredEvent<object> $event
+     */
+    #[AsEnteredListener(workflow: 'booking', place: 'annule')]
+    public function onAnnule(EnteredEvent $event): void
+    {
+        $booking = $event->getSubject();
+        if ($booking instanceof Booking) {
+            $this->placer($booking, null, null);
+        }
     }
 
     private function retirerSiVide(?Passage $passage): void

@@ -51,6 +51,12 @@ final class HomeController extends AbstractController
         return $this->render('home/about.html.twig');
     }
 
+    #[Route('/confidentialite', name: 'app_confidentialite', methods: ['GET'])]
+    public function confidentialite(): Response
+    {
+        return $this->render('home/confidentialite.html.twig');
+    }
+
     /** Shown by the service worker when a page cannot be loaded. */
     #[Route('/hors-ligne', name: 'app_hors_ligne', methods: ['GET'])]
     public function horsLigne(): Response

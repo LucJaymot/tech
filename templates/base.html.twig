@@ -35,6 +35,10 @@
             {{ include('_partials/flashes.html.twig') }}
 
             {% block body %}{% endblock %}
+
+            <footer class="mt-12 text-center text-xs text-slate-500">
+                <a href="{{ path('app_confidentialite') }}" class="inline-flex min-h-11 items-center underline-offset-4 hover:underline">Mentions légales et confidentialité</a>
+            </footer>
         </main>
 
         {% block navigation %}

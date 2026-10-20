@@ -46,6 +46,28 @@ final class HomeControllerTest extends WebTestCase
         }
     }
 
+    public function testVisitorReachesThePrivacyPageFromTheFooter(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+        $this->client->click($crawler->filter('footer')->selectLink('Mentions légales et confidentialité')->link());
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Mentions légales et confidentialité');
+        self::assertSelectorTextContains('main', 'sauf nouvelle connexion');
+    }
+
+    public function testEveryPageSendsTheSecurityHeaders(): void
+    {
+        $this->client->request('GET', '/connexion');
+        self::assertResponseHeaderSame('X-Frame-Options', 'DENY');
+        self::assertResponseHeaderSame('X-Content-Type-Options', 'nosniff');
+        self::assertResponseHeaderSame('Referrer-Policy', 'strict-origin-when-cross-origin');
+        self::assertResponseNotHasHeader('Strict-Transport-Security', 'plain HTTP');
+
+        $this->client->request('GET', '/connexion', server: ['HTTPS' => 'on']);
+        self::assertResponseHeaderSame('Strict-Transport-Security', 'max-age=31536000');
+    }
+
     public function testMemberSeesTheNextThreeSoireesSoonestFirst(): void
     {
         $concert = $this->soiree();

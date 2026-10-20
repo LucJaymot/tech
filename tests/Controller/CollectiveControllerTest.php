@@ -185,6 +185,47 @@ final class CollectiveControllerTest extends WebTestCase
         self::assertSame('member', $this->role('hugo', 'atelier-velo'));
     }
 
+    public function testAUserRenamesThenDeletesTheirAccount(): void
+    {
+        $client = $this->loggedInClient('theo@example.com');
+        $crawler = $client->request('GET', '/collectif');
+
+        $client->submit($crawler->selectButton('Enregistrer')->form(), ['nom' => '  ']);
+        self::assertResponseRedirects('/collectif#compte');
+        $crawler = $client->followRedirect();
+        self::assertSelectorTextContains('main', 'Le nom ne peut pas être vide.');
+
+        $client->submit($crawler->selectButton('Enregistrer')->form(), ['nom' => 'Théo D.']);
+        $crawler = $client->followRedirect();
+        self::assertInputValueSame('nom', 'Théo D.');
+
+        $client->submit($crawler->selectButton('Supprimer mon compte')->form());
+        self::assertResponseRedirects('/collectif#compte');
+        self::assertSame(1, $this->comptes('theo@example.com'), 'not confirmed');
+
+        $crawler = $client->followRedirect();
+        $client->submit($crawler->selectButton('Supprimer mon compte')->form(), ['confirmer' => '1']);
+        self::assertResponseRedirects('/connexion');
+        self::assertSame(0, $this->comptes('theo@example.com'));
+        self::assertNull($this->role('theo', 'jardin-des-lilas'));
+
+        $client->request('GET', '/collectif');
+        self::assertResponseRedirects('/connexion', message: 'logged out');
+    }
+
+    public function testTheLastAdminCannotDeleteTheirAccount(): void
+    {
+        $client = $this->loggedInClient('camille@example.com');
+        $crawler = $client->request('GET', '/collectif');
+
+        $client->submit($crawler->selectButton('Supprimer mon compte')->form(), ['confirmer' => '1']);
+
+        self::assertResponseRedirects('/collectif#compte');
+        $client->followRedirect();
+        self::assertSelectorTextContains('main', 'Nommez un autre administrateur de Jardin partagé des Lilas');
+        self::assertSame(1, $this->comptes('camille@example.com'));
+    }
+
     public function testAnonymousIsSentToLogin(): void
     {
         $client = static::createClient();
@@ -232,6 +273,12 @@ final class CollectiveControllerTest extends WebTestCase
         );
 
         return false === $role ? null : $role;
+    }
+
+    private function comptes(string $email): int
+    {
+        return (int) static::getContainer()->get(Connection::class)
+            ->fetchOne('SELECT COUNT(*) FROM "user" WHERE email = ?', [$email]);
     }
 
     private function collectiveId(string $slug): int

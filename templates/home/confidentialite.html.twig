@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mentions légales et confidentialité{% endblock %}
+
+{#
+    TODO avant la mise en ligne : remplacer les [À COMPLÉTER] par les vraies informations.
+    Les durées viennent de config/packages/rgpd.yaml et des liens partagés : à garder en phase.
+#}
+{% set editeur = {
+    nom: '[À COMPLÉTER : nom ou raison sociale de l\'éditeur]',
+    adresse: '[À COMPLÉTER : adresse]',
+    contact: '[À COMPLÉTER : e-mail de contact]',
+    directeur: '[À COMPLÉTER : directeur ou directrice de la publication]',
+} %}
+{% set hebergeur = {
+    nom: '[À COMPLÉTER : nom de l\'hébergeur]',
+    adresse: '[À COMPLÉTER : adresse et téléphone de l\'hébergeur]',
+} %}
+
+{% block body %}
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">Mentions légales et confidentialité</h1>
+
+    <div class="mt-8 flex flex-col gap-8 text-slate-300 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-slate-100 [&_li]:mt-1 [&_ul]:list-disc [&_ul]:pl-5">
+        <section>
+            <h2>Éditeur</h2>
+            <p>Caisson est édité par {{ editeur.nom }}, {{ editeur.adresse }}.</p>
+            <p>Contact : {{ editeur.contact }}. Directeur ou directrice de la publication : {{ editeur.directeur }}.</p>
+        </section>
+
+        <section>
+            <h2>Hébergement</h2>
+            <p>{{ hebergeur.nom }}, {{ hebergeur.adresse }}.</p>
+        </section>
+
+        <section>
+            <h2>Qui traite vos données</h2>
+            <p>Chaque collectif est responsable des données qu'il saisit sur ses membres, bénévoles, artistes et invités. L'éditeur de Caisson les héberge pour son compte et ne les utilise à aucune autre fin : ni publicité, ni revente, ni mesure d'audience.</p>
+        </section>
+
+        <section>
+            <h2>Données conservées</h2>
+            <ul>
+                <li>Comptes : nom affiché, adresse e-mail, date de dernière connexion.</li>
+                <li>Bénévoles et artistes : nom, e-mail et téléphone s'ils sont renseignés, créneaux, notes du collectif.</li>
+                <li>Invités des guest-lists : nom, nombre d'accompagnants, heure d'arrivée.</li>
+                <li>Notifications : l'abonnement technique du navigateur, si vous les activez.</li>
+                <li>Un cookie de session, pour rester connecté 30 jours. Aucun cookie publicitaire ni de mesure d'audience.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Durée de conservation</h2>
+            <ul>
+                <li>Un compte sans connexion depuis 2 ans reçoit un e-mail, puis est supprimé 30 jours plus tard sauf nouvelle connexion.</li>
+                <li>Les données d'un collectif sont gardées tant que le collectif existe, et effacées avec lui.</li>
+                <li>Les liens envoyés aux artistes expirent au bout de 30 jours, ceux des bénévoles 3 jours après la soirée.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Vos droits</h2>
+            <p>Vous pouvez accéder à vos données, les corriger, les exporter ou les faire effacer, et vous opposer à leur traitement.</p>
+            <ul>
+                <li>Avec un compte : modifiez votre nom ou supprimez votre compte dans « Mon compte », sur la page Collectif.</li>
+                <li>Bénévole, artiste ou invité : adressez-vous au collectif qui vous a inscrit, ou écrivez à {{ editeur.contact }}.</li>
+            </ul>
+            <p class="mt-2">Si la réponse ne vous satisfait pas, vous pouvez saisir la CNIL (cnil.fr).</p>
+        </section>
+    </div>
+{% endblock %}

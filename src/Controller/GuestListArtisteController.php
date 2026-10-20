@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Collective\ActiveCollective;
 use App\Entity\Booking;
+use App\Enum\BookingStatut;
 use App\Enum\SoireeStatut;
 use App\GuestList\GuestListRefusee;
 use App\GuestList\GuestLists;
@@ -43,7 +44,7 @@ final class GuestListArtisteController extends AbstractController
         // No account, hence no active collective: work outside the collective filter.
         $vue = $activeCollective->withoutFilter(function () use ($booking, $request, $entityManager, $guestLists): ?array {
             $entite = $entityManager->find(Booking::class, $booking);
-            if (null === $entite) {
+            if (null === $entite || BookingStatut::Annule === $entite->getStatutEnum()) {
                 return null;
             }
 

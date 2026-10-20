@@ -2,7 +2,9 @@
 
 namespace App\Collective;
 
+use App\Entity\Collective;
 use App\Entity\Membership;
+use App\Entity\User;
 use App\Enum\MembershipRole;
 use App\Repository\MembershipRepository;
 use Doctrine\DBAL\LockMode;
@@ -17,7 +19,28 @@ final class Membres
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly MembershipRepository $memberships,
+        private readonly ActiveCollective $activeCollective,
     ) {
+    }
+
+    /**
+     * A collective with other members that would lose its only admin if $user
+     * deleted their account; null when the account can go.
+     */
+    public function dernierAdminDe(User $user): ?Collective
+    {
+        // Memberships are filtered to the active collective otherwise.
+        return $this->activeCollective->withoutFilter(function () use ($user): ?Collective {
+            foreach ($this->memberships->findBy(['user' => $user, 'role' => MembershipRole::Admin]) as $membership) {
+                $collective = $membership->getCollective();
+                if ($this->memberships->count(['collective' => $collective]) > 1
+                    && $this->memberships->countAdmins($collective) <= 1) {
+                    return $collective;
+                }
+            }
+
+            return null;
+        });
     }
 
     /**

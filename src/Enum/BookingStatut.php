@@ -13,6 +13,7 @@ enum BookingStatut: string
     case ContratSigne = 'contrat_signe';
     case DeclareGuso = 'declare_guso';
     case Paye = 'paye';
+    case Annule = 'annule';
 
     public function label(): string
     {
@@ -23,6 +24,7 @@ enum BookingStatut: string
             self::ContratSigne => 'Contrat signé',
             self::DeclareGuso => 'Déclaré au GUSO',
             self::Paye => 'Payé',
+            self::Annule => 'Annulé',
         };
     }
 }

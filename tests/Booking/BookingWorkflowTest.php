@@ -33,10 +33,11 @@ final class BookingWorkflowTest extends KernelTestCase
         $kumo = $this->nouveauBooking(ModeRemuneration::Guso);
 
         $this->applyAll($kumo, ['negocier', 'confirmer', 'signer_contrat']);
-        self::assertSame(['declarer_guso'], $this->enabled($kumo));
+        self::assertSame(['declarer_guso', 'annuler'], $this->enabled($kumo));
 
         $this->applyAll($kumo, ['declarer_guso', 'payer']);
         self::assertSame('paye', $kumo->getStatut());
+        self::assertSame([], $this->enabled($kumo), 'a paid booking is not cancelled');
     }
 
     public function testCessionBookingIsPaidWithoutGusoDeclaration(): void
@@ -45,7 +46,7 @@ final class BookingWorkflowTest extends KernelTestCase
         $lila = $this->nouveauBooking(ModeRemuneration::Cession);
 
         $this->applyAll($lila, ['negocier', 'confirmer', 'signer_contrat']);
-        self::assertSame(['payer'], $this->enabled($lila));
+        self::assertSame(['payer', 'annuler'], $this->enabled($lila));
         self::assertFalse($this->workflow()->can($lila, 'declarer_guso'));
 
         $this->applyAll($lila, ['payer']);
@@ -58,10 +59,10 @@ final class BookingWorkflowTest extends KernelTestCase
         $kumo = $this->nouveauBooking(ModeRemuneration::Guso);
         $this->applyAll($kumo, ['negocier', 'confirmer', 'signer_contrat']);
 
-        self::assertSame([], $this->enabled($kumo));
+        self::assertSame(['annuler'], $this->enabled($kumo), 'payment is for admins');
 
         $this->actAs('camille@example.com');
-        self::assertSame(['declarer_guso'], $this->enabled($this->recharger($kumo)));
+        self::assertSame(['declarer_guso', 'annuler'], $this->enabled($this->recharger($kumo)));
     }
 
     public function testReaderChangesNothing(): void

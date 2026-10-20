@@ -5,6 +5,7 @@ namespace App\Booking;
 use App\Collective\ActiveCollective;
 use App\Entity\Booking;
 use App\Entity\Passage;
+use App\Enum\BookingStatut;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -52,7 +53,7 @@ final class FeuillesArtistes
                 ->setParameter('id', $bookingId)
                 ->getQuery()
                 ->getOneOrNullResult();
-            if (!$booking instanceof Booking) {
+            if (!$booking instanceof Booking || BookingStatut::Annule === $booking->getStatutEnum()) {
                 return null;
             }
 
