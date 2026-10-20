@@ -3,8 +3,8 @@
 {% block title %}Guest list · {{ vue.artiste }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Guest list · {{ vue.artiste }}</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ vue.soiree }}</h1>
+    <p class="etiquette">Guest list · {{ vue.artiste }}</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ vue.soiree }}</h1>
     <p class="mt-1 text-slate-300">{{ vue.date|date('d/m/Y') }} · {{ vue.quota - vue.restantes }} / {{ vue.quota }} personnes</p>
 
     <twig:Card class="mt-6" title="Vos invités">

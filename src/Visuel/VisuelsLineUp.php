@@ -52,7 +52,7 @@ final class VisuelsLineUp
             'collectif' => $collective->getName(),
             'accent' => $collective->getCouleurAccent(),
             // Background of templates/visuels/lineup.svg.twig.
-            'accent_lisible' => Contraste::lisibleSur($collective->getCouleurAccent(), '#0b0b10'),
+            'accent_lisible' => Contraste::lisibleSur($collective->getCouleurAccent(), '#0E0E0E'),
             'logo' => $this->identite->logoEnDataUri($collective),
         ]);
     }

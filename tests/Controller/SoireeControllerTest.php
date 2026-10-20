@@ -56,7 +56,7 @@ final class SoireeControllerTest extends WebTestCase
         self::assertSelectorTextContains('#en-tete', '19:00 → 01:00 (lendemain) · Salle des Lilas');
         self::assertSelectorExists('#statut [data-led="attention"]');
         self::assertSelectorTextContains('#statut', 'En préparation', 'a text label, not the colour alone');
-        self::assertSelectorTextSame('#compte-a-rebours.font-doto', 'J-21');
+        self::assertSelectorTextSame('#compte-a-rebours.compteur', 'J-21');
     }
 
     public function testBodySummarisesEachModule(): void
@@ -67,7 +67,8 @@ final class SoireeControllerTest extends WebTestCase
         $this->client->request('GET', $this->url());
 
         self::assertSelectorTextContains('#module-line-up', 'DJ Kumo b2b Nadia K');
-        self::assertSelectorTextContains('#module-taches', '4 démarches à faire');
+        self::assertSelectorTextContains('#module-taches', '4 démarches à faire, dont 1 en retard');
+        self::assertSelectorTextNotContains('#module-taches', '{%');
         self::assertSelectorTextContains('#module-benevoles', '4 personnes manquantes sur 3 créneaux');
         self::assertSelectorTextContains('#module-guest-lists', '6 personnes sur 3 listes');
         self::assertSelectorTextContains('#module-budget', Centimes::formater($totaux->soldePrevu()));
@@ -86,13 +87,51 @@ final class SoireeControllerTest extends WebTestCase
         self::assertSelectorExists('#module-budget');
     }
 
-    public function testCollectivePageLinksEachSoireeToItsPage(): void
+    public function testSoireesPageListsUpcomingThenPastAndLinksEachToItsPage(): void
+    {
+        $concert = $this->soiree();
+        $url = '/soirees/'.$concert->getId();
+        $em = static::getContainer()->get('doctrine.orm.entity_manager');
+        foreach (['-10 days' => 'Rentrée', '-40 days' => 'Été', '+60 days' => 'Hiver'] as $decalage => $nom) {
+            $em->persist(new Soiree($concert->getCollective(), $nom, new \DateTimeImmutable($decalage), new \DateTimeImmutable('20:00'), new \DateTimeImmutable('23:00')));
+        }
+        $em->flush();
+
+        $this->login('theo@example.com');
+        $crawler = $this->client->request('GET', '/soirees');
+
+        self::assertResponseIsSuccessful();
+        $noms = static fn (string $liste): array => $crawler->filter($liste.' > li a > span:nth-child(2) > span:first-child')->each(static fn ($n): string => $n->text());
+        self::assertSame(['Concert de printemps', 'Hiver'], $noms('#soirees'), 'soonest first');
+        self::assertSame(['Rentrée', 'Été'], $noms('#soirees-passees'), 'latest first');
+        self::assertSame($url, $crawler->filter('#soirees a')->first()->attr('href'));
+        self::assertSelectorExists('nav[aria-label="Navigation principale"] a[href="/soirees"][aria-current="page"]');
+    }
+
+    public function testSoireeTabStaysLitInsideASoiree(): void
     {
         $url = $this->url();
         $this->login('theo@example.com');
-        $crawler = $this->client->request('GET', '/collectif');
 
-        self::assertSame($url, $crawler->filter('#soirees a')->first()->attr('href'));
+        foreach ([$url, $url.'/planning', $url.'/retroplanning', $url.'/bilan'] as $page) {
+            $this->client->request('GET', $page);
+            self::assertSelectorExists('nav[aria-label="Navigation principale"] a[href="/soirees"][aria-current="page"]', $page);
+        }
+        $this->client->request('GET', '/collectif');
+        self::assertSelectorExists('nav[aria-label="Navigation principale"] a[href="/collectif"][aria-current="page"]');
+        self::assertSelectorNotExists('nav[aria-label="Navigation principale"] a[href="/a-propos"]');
+    }
+
+    public function testPageFollowsTheSoireesLifePrepareTheNightAfterwards(): void
+    {
+        $this->login('theo@example.com');
+        $crawler = $this->client->request('GET', $this->url());
+
+        self::assertSame(['Préparer', 'Le soir J', 'Après'], $crawler->filter('section > h2.etiquette')->each(static fn ($h): string => $h->text()));
+        self::assertSelectorExists('#module-soir-j a[href$="/feuille-de-route"]');
+        self::assertSelectorExists('#module-soir-j a[href$="/pointage"]');
+        self::assertSelectorExists('#module-line-up a#page-publique[href^="/s/"]');
+        self::assertSame('h3', $crawler->filter('#module-taches header > *')->first()->nodeName());
     }
 
     public function testCountdownCountsCalendarDaysInTheSoireeTimeZone(): void
@@ -107,13 +146,17 @@ final class SoireeControllerTest extends WebTestCase
         self::assertSame('J+3', ResumeSoiree::compteAReboursLe($soiree, new \DateTimeImmutable('2027-04-06 08:00', $paris)));
     }
 
-    public function testDotoFontIsSelfHosted(): void
+    public function testCharterFontsAreSelfHosted(): void
     {
         $this->login('theo@example.com');
         $crawler = $this->client->request('GET', $this->url());
 
         $this->client->request('GET', (string) $crawler->filter('link[rel="stylesheet"][href*="app"]')->attr('href'));
-        self::assertMatchesRegularExpression('#url\("?\.\./fonts/doto-700-latin-[\w-]+\.woff2"?\)#', (string) $this->client->getInternalResponse()->getContent());
+        $css = (string) $this->client->getInternalResponse()->getContent();
+        foreach (['doto-800-latin', 'space-grotesk-latin', 'ibm-plex-mono-400-latin'] as $police) {
+            self::assertMatchesRegularExpression('#url\("?\.\./fonts/'.$police.'-[\w-]+\.woff2"?\)#', $css, $police);
+        }
+        self::assertStringNotContainsString('fonts.googleapis.com', $css);
     }
 
     private function login(string $email): void

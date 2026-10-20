@@ -3,8 +3,9 @@
 {% block title %}Bilan · {{ soiree.nom }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Bilan · {{ soiree.date|date('d/m/Y') }} · {{ soiree.statutEnum.label }}</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+    {{ include('_partials/retour_soiree.html.twig', {id: soiree.id, nom: soiree.nom}) }}
+    <p class="etiquette">Bilan · {{ soiree.date|date('d/m/Y') }} · {{ soiree.statutEnum.label }}</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ soiree.nom }}</h1>
 
     {% set t = bilan.totaux %}
     <div class="mt-6 flex flex-col gap-4">
@@ -36,6 +37,7 @@
                 <p class="mt-3"><twig:Led statut="attention" libelle="{{ t.lignesSansReel }} montant{{ t.lignesSansReel > 1 ? 's' }} réel{{ t.lignesSansReel > 1 ? 's' }} encore inconnu{{ t.lignesSansReel > 1 ? 's' }}" /></p>
             {% endif %}
             <twig:block name="footer">
+                <twig:Button href="{{ path('app_bilan_annuel', {annee: soiree.date|date('Y')}) }}" variant="ghost" size="sm" id="bilan-annuel">Bilan {{ soiree.date|date('Y') }}</twig:Button>
                 <twig:Button href="{{ path('app_budget', {id: soiree.id}) }}" variant="secondary" size="sm">Modifier le budget</twig:Button>
             </twig:block>
         </twig:Card>

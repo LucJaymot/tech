@@ -35,19 +35,31 @@ final class SoireeType extends AbstractType
         $collective = $options['collective'];
 
         $builder
-            ->add('nom', TextType::class, ['label' => 'Nom'])
+            ->add('nom', TextType::class, ['label' => 'Nom', 'empty_data' => ''])
             ->add('ouverture', DateTimeType::class, [
                 'label' => 'Ouverture',
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
                 'help' => 'Le jour de l\'ouverture est la date de la soirée.',
-                'constraints' => $options['creation'] ? [new Assert\GreaterThan('now', message: 'La soirée doit avoir lieu dans le futur.')] : [],
+                'constraints' => [new Assert\NotBlank(), ...($options['creation'] ? [new Assert\GreaterThan('now', message: 'La soirée doit avoir lieu dans le futur.')] : [])],
+                // Left empty, the soirée keeps its date: NotBlank above reports it.
+                'setter' => static function (Soiree $soiree, ?\DateTimeImmutable $ouverture): void {
+                    if (null !== $ouverture) {
+                        $soiree->setOuverture($ouverture);
+                    }
+                },
             ])
             ->add('fermeture', DateTimeType::class, [
                 'label' => 'Fermeture',
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
                 'help' => 'Elle peut être le lendemain, 24 heures au plus après l\'ouverture.',
+                'constraints' => [new Assert\NotBlank()],
+                'setter' => static function (Soiree $soiree, ?\DateTimeImmutable $fermeture): void {
+                    if (null !== $fermeture) {
+                        $soiree->setFermeture($fermeture);
+                    }
+                },
             ])
             ->add('lieu', EntityType::class, [
                 'label' => 'Lieu',

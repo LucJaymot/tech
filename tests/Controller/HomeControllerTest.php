@@ -32,14 +32,16 @@ final class HomeControllerTest extends WebTestCase
 
     public function testVisitorSeesThePresentationAndNoCollectiveData(): void
     {
-        $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('#presentation h1', 'CAISSON');
-        self::assertSelectorExists('#presentation img');
+        self::assertSelectorTextContains('#presentation h1', 'La régie de vos soirées.');
+        self::assertSelectorTextContains('#presentation', 'caisson');
         self::assertSelectorExists('#presentation a[href="/connexion"]');
+        self::assertCount(16, $crawler->filter('#presentation ol li'), 'the sequencer, J-60 to J+15');
+        self::assertSelectorTextContains('#presentation ol', 'Sacem · buvette en mairie');
         $html = (string) $this->client->getResponse()->getContent();
-        foreach (['Concert de printemps', 'Jardin', 'Atelier', 'Sacem'] as $donnee) {
+        foreach (['Concert de printemps', 'Jardin', 'Atelier', 'Salle des Lilas', 'Lila Moon'] as $donnee) {
             self::assertStringNotContainsString($donnee, $html);
         }
     }
@@ -59,7 +61,7 @@ final class HomeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(
             ['Avant-première J-10', 'Concert de printemps J-21', 'Hiver J-60'],
-            $crawler->filter('#prochaines-soirees li')->each(static fn (Crawler $li): string => $li->filter('a > span:first-child > span:first-child')->text().' '.$li->filter('.font-doto')->text()),
+            $crawler->filter('#prochaines-soirees li')->each(static fn (Crawler $li): string => $li->filter('a > span:first-child > span:first-child')->text().' '.$li->filter('.compteur')->text()),
         );
         self::assertSame('/soirees/'.$concert->getId(), $crawler->filter('#prochaines-soirees li')->eq(1)->filter('a')->attr('href'));
     }

@@ -3,8 +3,9 @@
 {% block title %}Bilan {{ annee }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Bilan annuel · année civile</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ annee }}</h1>
+    {{ include('_partials/retour_soiree.html.twig', {href: path('app_soirees'), nom: 'Soirées'}) }}
+    <p class="etiquette">Bilan annuel · année civile</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ annee }}</h1>
     <p class="mt-2 flex gap-4 text-sm">
         <a href="{{ path('app_bilan_annuel', {annee: annee - 1}) }}" class="text-indigo-400 underline">{{ annee - 1 }}</a>
         <a href="{{ path('app_bilan_annuel', {annee: annee + 1}) }}" class="text-indigo-400 underline">{{ annee + 1 }}</a>
@@ -25,18 +26,18 @@
                             {% for s in bilan.soirees %}
                                 <tr class="border-t border-slate-800">
                                     <th scope="row" class="py-2 pr-3 text-left font-normal"><a href="{{ path('app_bilan', {id: s.id}) }}" class="underline">{{ s.nom }}</a><br><span class="text-xs text-slate-400">{{ s.date|date('d/m/Y') }}{% if s.sans_reel %} · {{ s.sans_reel }} réel{{ s.sans_reel > 1 ? 's' }} manquant{{ s.sans_reel > 1 ? 's' }}{% endif %}</span></th>
-                                    <td class="py-2 pr-3 text-right tabular-nums">{{ s.totaux.depensesPrevues|euros }}<br>{{ s.totaux.depensesReelles|euros }}</td>
-                                    <td class="py-2 pr-3 text-right tabular-nums">{{ s.totaux.recettesPrevues|euros }}<br>{{ s.totaux.recettesReelles|euros }}</td>
-                                    <td class="py-2 text-right tabular-nums">{{ s.totaux.soldePrevu|euros }}<br>{{ s.totaux.soldeReel|euros }}</td>
+                                    <td class="py-2 pr-3 text-right font-mono tabular-nums">{{ s.totaux.depensesPrevues|euros }}<br>{{ s.totaux.depensesReelles|euros }}</td>
+                                    <td class="py-2 pr-3 text-right font-mono tabular-nums">{{ s.totaux.recettesPrevues|euros }}<br>{{ s.totaux.recettesReelles|euros }}</td>
+                                    <td class="py-2 text-right font-mono tabular-nums">{{ s.totaux.soldePrevu|euros }}<br>{{ s.totaux.soldeReel|euros }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                         <tfoot class="font-semibold">
                             <tr class="border-t border-slate-700">
                                 <th scope="row" class="py-2 pr-3 text-left">Total</th>
-                                <td class="py-2 pr-3 text-right tabular-nums">{{ t.depenses_prevues|euros }}<br>{{ t.depenses_reelles|euros }}</td>
-                                <td class="py-2 pr-3 text-right tabular-nums">{{ t.recettes_prevues|euros }}<br>{{ t.recettes_reelles|euros }}</td>
-                                <td class="py-2 text-right tabular-nums">{{ t.solde_prevu|euros }}<br>{{ t.solde_reel|euros }}</td>
+                                <td class="py-2 pr-3 text-right font-mono tabular-nums">{{ t.depenses_prevues|euros }}<br>{{ t.depenses_reelles|euros }}</td>
+                                <td class="py-2 pr-3 text-right font-mono tabular-nums">{{ t.recettes_prevues|euros }}<br>{{ t.recettes_reelles|euros }}</td>
+                                <td class="py-2 text-right font-mono tabular-nums">{{ t.solde_prevu|euros }}<br>{{ t.solde_reel|euros }}</td>
                             </tr>
                         </tfoot>
                     </table>

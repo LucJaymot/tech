@@ -3,8 +3,8 @@
 {% block title %}Accueil · {{ collective.name }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Tableau de bord</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ collective.name }}</h1>
+    <p class="etiquette">Tableau de bord</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ collective.name }}</h1>
 
     <div class="mt-6 flex flex-col gap-4">
         <twig:Card title="Prochaines soirées" id="prochaines-soirees">
@@ -23,34 +23,43 @@
                                     <span class="block truncate font-medium">{{ p.soiree.nom }}</span>
                                     <span class="block text-sm text-slate-400">{{ p.soiree.date|date('d/m/Y') }} · {{ p.soiree.ouverture|date('H:i') }}{{ p.soiree.lieu ? ' · ' ~ p.soiree.lieu.nom }}</span>
                                 </span>
-                                <span class="shrink-0 font-doto text-2xl font-bold text-(--accent-lisible) tabular-nums">{{ p.compte_a_rebours }}</span>
+                                <span class="compteur shrink-0 text-2xl leading-none tabular-nums">{{ p.compte_a_rebours }}</span>
                             </a>
                         </li>
                     {% endfor %}
                 </ul>
             {% endif %}
+            <twig:block name="footer">
+                <twig:Button href="{{ path('app_soirees') }}" variant="ghost" size="sm" id="toutes-les-soirees">Toutes les soirées</twig:Button>
+            </twig:block>
         </twig:Card>
 
-        <twig:Card title="Démarches à faire" id="demarches">
-            <ul class="-my-2 divide-y divide-slate-800">
+        <section id="demarches" class="flex flex-col gap-3" aria-labelledby="demarches-titre">
+            <h2 class="etiquette" id="demarches-titre">Démarches à faire</h2>
+            {# Check rows of the charter: a LED bar, the label, the state in mono. #}
+            <ul class="flex flex-col gap-2">
                 {% for tache in taches %}
-                    <li class="py-3">
-                        <a href="{{ path('app_soiree', {id: tache.soiree.id}) }}" class="block">
-                            {% if tache.echeance < aujourdhui %}
-                                <twig:Led statut="bloquant" libelle="En retard depuis le {{ tache.echeance|date('d/m/Y') }}" />
-                            {% elseif tache.echeance <= aujourdhui|date_modify('+7 days') %}
-                                <twig:Led statut="attention" libelle="Avant le {{ tache.echeance|date('d/m/Y') }}" />
-                            {% else %}
-                                <twig:Led statut="ok" libelle="Avant le {{ tache.echeance|date('d/m/Y') }}" />
-                            {% endif %}
-                            <span class="mt-1 block font-medium">{{ tache.libelle }}</span>
-                            <span class="block text-sm text-slate-400">{{ tache.soiree.nom }}</span>
+                    {% set statut = tache.echeance < aujourdhui ? 'bloquant' : (tache.echeance <= aujourdhui|date_modify('+7 days') ? 'attention' : 'ok') %}
+                    <li>
+                        <a href="{{ path('app_soiree', {id: tache.soiree.id}) }}" class="flex min-h-14 items-center gap-4 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 transition-colors hover:border-slate-700">
+                            <span class="h-6 w-2 shrink-0 rounded-[2px] {{ {ok: 'bg-emerald-400 shadow-[0_0_10px_rgb(52_199_89/0.8)]', attention: 'bg-amber-400 shadow-[0_0_10px_rgb(255_176_0/0.8)]', bloquant: 'bg-red-500 shadow-[0_0_10px_rgb(255_59_48/0.8)]'}[statut] }}" data-led="{{ statut }}" aria-hidden="true"></span>
+                            <span class="min-w-0 flex-1">
+                                <span class="block font-medium">{{ tache.libelle }}</span>
+                                <span class="block text-sm text-slate-400">{{ tache.soiree.nom }}</span>
+                            </span>
+                            <span class="shrink-0 text-right font-mono text-xs tracking-[0.12em] uppercase {{ {ok: 'text-slate-300', attention: 'text-amber-300', bloquant: 'text-red-300'}[statut] }}">
+                                {%- if statut == 'bloquant' -%}
+                                    En retard<span class="sr-only"> depuis le {{ tache.echeance|date('d/m/Y') }}</span>
+                                {%- else -%}
+                                    <span class="sr-only">Avant le </span>{{ tache.echeance|date('d/m') }}
+                                {%- endif -%}
+                            </span>
                         </a>
                     </li>
                 {% else %}
-                    <li class="py-3"><twig:Led statut="ok" libelle="Aucune démarche en attente" /></li>
+                    <li class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3"><twig:Led statut="ok" libelle="Aucune démarche en attente" /></li>
                 {% endfor %}
             </ul>
-        </twig:Card>
+        </section>
     </div>
 {% endblock %}

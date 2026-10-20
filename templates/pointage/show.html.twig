@@ -16,7 +16,7 @@
         <div class="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-black px-4 pt-2 pb-4 sm:-mx-6 sm:px-6">
             <div class="flex items-baseline justify-between gap-3">
                 <h1 class="text-2xl font-bold">{{ soiree.nom }}</h1>
-                <a href="{{ path('app_collective') }}" class="text-lg text-white underline underline-offset-4">Quitter</a>
+                <a href="{{ path('app_soiree', {id: soiree.id}) }}" class="inline-flex min-h-11 items-center text-lg text-white underline underline-offset-4">Quitter</a>
             </div>
             <label for="recherche" class="sr-only">Rechercher un invité</label>
             <input id="recherche" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search"

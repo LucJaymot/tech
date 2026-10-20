@@ -45,7 +45,7 @@ final class SoireeFormulaireTest extends WebTestCase
     public function testMemberCreatesASoireeThatCrossesMidnight(): void
     {
         $this->login('theo@example.com');
-        $crawler = $this->client->request('GET', '/collectif');
+        $crawler = $this->client->request('GET', '/soirees');
         $this->client->click($crawler->filter('#nouvelle-soiree')->link());
         self::assertResponseIsSuccessful();
 
@@ -122,6 +122,9 @@ final class SoireeFormulaireTest extends WebTestCase
         yield 'longer than 24 hours' => [['soiree[fermeture]' => $ouverture->modify('+25 hours')->format('Y-m-d\TH:i')], 'Une soirée dure 24 heures au plus.'];
         yield 'in the past' => [['soiree[ouverture]' => '2020-01-10T23:00', 'soiree[fermeture]' => '2020-01-11T05:00'], 'La soirée doit avoir lieu dans le futur.'];
         yield 'jauge not an integer' => [['soiree[jauge]' => '12.5'], 'La jauge doit être un nombre entier.'];
+        yield 'no name' => [['soiree[nom]' => ''], 'Cette valeur ne doit pas être vide.'];
+        yield 'no opening' => [['soiree[ouverture]' => ''], 'Cette valeur ne doit pas être vide.'];
+        yield 'no closing' => [['soiree[fermeture]' => ''], 'Cette valeur ne doit pas être vide.'];
         yield 'jauge not positive' => [['soiree[jauge]' => '0'], 'Cette valeur doit être strictement positive.'];
     }
 
@@ -196,7 +199,7 @@ final class SoireeFormulaireTest extends WebTestCase
         $crawler = $this->client->request('GET', substr($url, 0, -\strlen('/modifier')));
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('#modifier');
-        $crawler = $this->client->request('GET', '/collectif');
+        $crawler = $this->client->request('GET', '/soirees');
         self::assertCount(0, $crawler->filter('#nouvelle-soiree'));
 
         foreach (['GET' => '/soirees/nouvelle', 'POST' => '/soirees/nouvelle'] + ['GET ' => $url, 'POST ' => $url] as $methode => $cible) {

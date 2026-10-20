@@ -12,6 +12,7 @@ use App\Visuel\GenererVisuels;
 use App\Visuel\VisuelsLineUp;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\DomCrawler\Field\FileFormField;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 
@@ -83,6 +84,51 @@ final class VisuelsControllerTest extends WebTestCase
         self::assertStringStartsWith('logos/'.$collective->getId().'/', (string) $collective->getLogo());
     }
 
+    public function testIdentityDressesTheAppAndThePublicPage(): void
+    {
+        $this->changerIdentite(['couleur' => '#ff5500', 'style_titres' => 'mono'], logo: true);
+
+        $crawler = $this->client->request('GET', '/collectif');
+        self::assertStringContainsString('--font-titres: var(--font-mono);', (string) $crawler->filter('html')->attr('style'));
+        $logo = (string) $crawler->filter('header img')->attr('src');
+        self::assertSame($logo, $crawler->filter('#logo-actuel')->attr('src'));
+        self::assertSame('mono', $crawler->filter('#identite select[name="style_titres"] option[selected]')->attr('value'));
+
+        // The visitor of the public page has no collective: it still wears the soirée's.
+        $this->client->getCookieJar()->clear();
+        $crawler = $this->client->request('GET', '/s/'.$this->soiree()->getSlug());
+        $style = (string) $crawler->filter('html')->attr('style');
+        self::assertStringContainsString('--accent: #ff5500;', $style);
+        self::assertStringContainsString('--font-titres: var(--font-mono);', $style);
+        self::assertSame($logo, $crawler->filter('main img')->first()->attr('src'));
+
+        $this->client->request('GET', $logo);
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('Content-Type', 'image/png');
+        self::assertStringContainsString('immutable', (string) $this->client->getResponse()->headers->get('Cache-Control'));
+    }
+
+    public function testAdminRemovesTheLogo(): void
+    {
+        $this->changerIdentite([], logo: true);
+        $ancien = (string) $this->client->request('GET', '/collectif')->filter('#logo-actuel')->attr('src');
+
+        $this->changerIdentite(['retirer_logo' => '1']);
+
+        self::assertNull($this->jardin()->getLogo());
+        self::assertCount(0, $this->client->request('GET', '/collectif')->filter('#logo-actuel, header img'));
+        self::assertSame([], static::getContainer()->get('visuels.storage')->listContents('logos', true)->filter(static fn ($f): bool => $f->isFile())->toArray());
+        $this->client->request('GET', $ancien);
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testUnknownStyleKeepsTheCurrentOne(): void
+    {
+        $this->changerIdentite(['style_titres' => 'comic-sans']);
+
+        self::assertSame('grotesk', $this->jardin()->getStyleTitres()->value);
+    }
+
     public function testInvalidColourIsRejected(): void
     {
         $this->login('camille@example.com');
@@ -91,7 +137,7 @@ final class VisuelsControllerTest extends WebTestCase
         $this->client->followRedirect();
 
         self::assertSelectorTextContains('main', 'Choisissez une couleur au format #rrggbb.');
-        self::assertSame('#6366f1', $this->jardin()->getCouleurAccent());
+        self::assertSame('#6e8bff', $this->jardin()->getCouleurAccent());
     }
 
     public function testMembersCannotChangeTheIdentity(): void
@@ -99,6 +145,40 @@ final class VisuelsControllerTest extends WebTestCase
         $this->login('theo@example.com');
         $crawler = $this->client->request('GET', '/collectif');
         self::assertCount(0, $crawler->filter('#identite'));
+    }
+
+    /**
+     * @param array<string, string> $champs
+     */
+    private function changerIdentite(array $champs, bool $logo = false): void
+    {
+        $this->login('camille@example.com');
+        // Lets a tampered request through, as a script would send it.
+        $form = $this->client->request('GET', '/collectif')->filter('#identite form')->form()->disableValidation();
+        foreach ($champs as $nom => $valeur) {
+            $champ = $form[$nom];
+            if ($champ instanceof ChoiceFormField && 'checkbox' === $champ->getType()) {
+                $champ->tick();
+            } else {
+                $form[$nom] = $valeur;
+            }
+        }
+        if ($logo) {
+            $fichier = $form['logo'];
+            self::assertInstanceOf(FileFormField::class, $fichier);
+            $fichier->upload(VisuelsLineUpTest::logo()->getPathname());
+        }
+        $this->client->submit($form);
+        self::assertResponseRedirects('/collectif#identite');
+    }
+
+    private function soiree(): Soiree
+    {
+        $this->actAs('camille@example.com');
+        $soiree = static::getContainer()->get(SoireeRepository::class)->findOneBy(['nom' => 'Concert de printemps']);
+        self::assertInstanceOf(Soiree::class, $soiree);
+
+        return $soiree;
     }
 
     private function jardin(): Collective

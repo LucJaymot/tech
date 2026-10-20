@@ -6,7 +6,7 @@
     {% set erreurs = this.erreurs %}
 
     <twig:Card title="Totaux" description="Recalculés à chaque modification." id="totaux">
-        <dl class="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-2 text-sm tabular-nums">
+        <dl class="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-2 text-sm font-mono tabular-nums">
             <dt></dt><dd class="text-right text-slate-400">Prévu</dd><dd class="text-right text-slate-400">Réel</dd>
             <dt>Dépenses</dt><dd class="text-right" id="depenses-prevues">{{ totaux.depensesPrevues|euros }}</dd><dd class="text-right" id="depenses-reelles">{{ totaux.depensesReelles|euros }}</dd>
             <dt>Recettes</dt><dd class="text-right" id="recettes-prevues">{{ totaux.recettesPrevues|euros }}</dd><dd class="text-right" id="recettes-reelles">{{ totaux.recettesReelles|euros }}</dd>
@@ -26,7 +26,7 @@
             {% for estimation in totaux.estimations %}
                 <li class="flex flex-wrap items-baseline justify-between gap-2">
                     <span>{{ estimation.taux.libelle }} ({{ estimation.taux.pourcentage }}, sur {{ estimation.taux.assiette.label|lower }}) <twig:Badge status="warning" :dot="false">estimation</twig:Badge></span>
-                    <span class="tabular-nums">{{ estimation.prevu|euros }} prévu · {{ estimation.reel|euros }} réel</span>
+                    <span class="font-mono tabular-nums">{{ estimation.prevu|euros }} prévu · {{ estimation.reel|euros }} réel</span>
                 </li>
             {% endfor %}
             <li class="mt-2 border-t border-slate-800 pt-3" id="seuil">
@@ -73,14 +73,14 @@
                                 {{ champ == 'prevu' ? 'Prévu' : 'Réel' }}
                                 {% if ligne.estGeneree or not modifiable %}
                                     {% set montant = champ == 'prevu' ? ligne.montantPrevu : ligne.montantReel %}
-                                    <span class="py-2 text-base tabular-nums text-slate-100">{{ montant is null ? '—' : montant|euros }}</span>
+                                    <span class="py-2 text-base font-mono tabular-nums text-slate-100">{{ montant is null ? '—' : montant|euros }}</span>
                                 {% else %}
                                     <input type="text" inputmode="decimal" name="montants[{{ id }}][{{ champ }}]"
                                            data-model="on(change)|montants.{{ id }}.{{ champ }}"
                                            value="{{ this.montants[id][champ] ?? '' }}"
                                            placeholder="{{ champ == 'reel' ? 'inconnu' : '0,00' }}"
                                            aria-invalid="{{ erreur ? 'true' : 'false' }}"
-                                           class="rounded-lg border bg-slate-950 px-3 py-2 text-base tabular-nums text-slate-100 {{ erreur ? 'border-red-500' : 'border-slate-700' }}">
+                                           class="rounded-lg border bg-slate-950 px-3 py-2 text-base font-mono tabular-nums text-slate-100 {{ erreur ? 'border-red-500' : 'border-slate-700' }}">
                                     {% if erreur %}<span class="text-red-400">{{ erreur }}</span>{% endif %}
                                 {% endif %}
                             </label>

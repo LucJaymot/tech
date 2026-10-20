@@ -1,23 +1,23 @@
 {#
-    Badge de statut.
+    Ruban d'étiqueteuse : statut ou étiquette courte.
     <twig:Badge status="success">Validé</twig:Badge>
-    Statuts : neutral, info, success, warning, danger.
+    Statuts : neutral (ruban noir), info (accent du collectif), success, warning (ambre), danger.
 #}
 {% props status = 'neutral', dot = true %}
 {% set badge = html_cva(
-    base: 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset',
+    base: 'inline-flex items-center gap-1.5 rounded-[2px] px-2.5 py-1 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.2em] shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_1px_0_#000]',
     variants: {
         status: {
-            neutral: 'bg-slate-800 text-slate-300 ring-slate-700',
-            info: 'bg-sky-950 text-sky-300 ring-sky-800',
-            success: 'bg-emerald-950 text-emerald-300 ring-emerald-800',
-            warning: 'bg-amber-950 text-amber-300 ring-amber-800',
-            danger: 'bg-red-950 text-red-300 ring-red-800',
+            neutral: 'bg-ruban text-slate-100',
+            info: 'bg-indigo-500 text-(--accent-texte)',
+            success: 'bg-ruban text-emerald-400',
+            warning: 'bg-amber-400 text-slate-950',
+            danger: 'bg-red-500 text-slate-950',
         },
     },
 ) %}
 {% set classes = badge.apply({status: status}, attributes.render('class')) %}
 <span class="{{ classes }}" {{ attributes }}>
-    {% if dot %}<span class="size-1.5 rounded-full bg-current" aria-hidden="true"></span>{% endif %}
+    {% if dot %}<span class="size-1.5 rounded-[1px] bg-current" aria-hidden="true"></span>{% endif %}
     {% block content %}{% endblock %}
 </span>

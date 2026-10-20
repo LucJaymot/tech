@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\StyleTitres;
 use App\Repository\CollectiveRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -33,9 +34,9 @@ class Collective
     private \DateTimeImmutable $createdAt;
 
     /** Accent colour of its line-up visuals, "#rrggbb". */
-    #[ORM\Column(length: 7, options: ['default' => '#6366f1'])]
+    #[ORM\Column(length: 7, options: ['default' => '#6e8bff'])]
     #[Assert\Regex('/^#[0-9a-f]{6}$/', message: 'Choisissez une couleur au format #rrggbb.')]
-    private string $couleurAccent = '#6366f1';
+    private string $couleurAccent = '#6e8bff';
 
     /**
      * Subscription plan. Nothing depends on it until a price is decided.
@@ -46,6 +47,10 @@ class Collective
     /** Key of its PNG or JPEG logo in the "visuels" storage, managed by App\Visuel\IdentiteVisuelle. */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $logo = null;
+
+    /** Typeface of its page titles, in the app and on its public pages. */
+    #[ORM\Column(length: 10, enumType: StyleTitres::class, options: ['default' => 'grotesk'])]
+    private StyleTitres $styleTitres = StyleTitres::Grotesk;
 
     /**
      * @var Collection<int, Membership>
@@ -120,6 +125,18 @@ class Collective
     public function setLogo(?string $logo): static
     {
         $this->logo = $logo;
+
+        return $this;
+    }
+
+    public function getStyleTitres(): StyleTitres
+    {
+        return $this->styleTitres;
+    }
+
+    public function setStyleTitres(StyleTitres $styleTitres): static
+    {
+        $this->styleTitres = $styleTitres;
 
         return $this;
     }

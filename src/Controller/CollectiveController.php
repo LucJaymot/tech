@@ -4,9 +4,9 @@ namespace App\Controller;
 
 use App\Collective\ActiveCollective;
 use App\Entity\User;
+use App\Enum\StyleTitres;
 use App\Repository\InvitationRepository;
 use App\Repository\MembershipRepository;
-use App\Repository\SoireeRepository;
 use App\Security\Voter\CollectiveVoter;
 use App\Storage\FichierRefuse;
 use App\Visuel\IdentiteVisuelle;
@@ -31,7 +31,10 @@ final class CollectiveController extends AbstractController
     }
 
     #[Route('/collectif', name: 'app_collective', methods: ['GET'])]
-    public function show(MembershipRepository $memberships, InvitationRepository $invitations, SoireeRepository $soirees, #[Autowire('%env(VAPID_PUBLIC_KEY)%')] string $clePush): Response
+    /**
+     * Members and settings of the collective; its soirées are on /soirees.
+     */
+    public function show(MembershipRepository $memberships, InvitationRepository $invitations, #[Autowire('%env(VAPID_PUBLIC_KEY)%')] string $clePush): Response
     {
         $collective = $this->activeCollective->get();
         $canManage = null !== $collective && $this->isGranted(CollectiveVoter::MANAGE_MEMBERS, $collective);
@@ -41,15 +44,14 @@ final class CollectiveController extends AbstractController
             'memberships' => $memberships->findForActiveCollective(),
             'can_manage' => $canManage,
             'invitations' => $canManage ? $invitations->findPending() : [],
-            'soirees' => $soirees->findBy([], ['date' => 'ASC']),
-            'can_view_budget' => null !== $collective && $this->isGranted(CollectiveVoter::VIEW_BUDGET, $collective),
-            'can_edit' => null !== $collective && $this->isGranted(CollectiveVoter::EDIT, $collective),
             'cle_push' => $clePush,
+            'styles_titres' => StyleTitres::cases(),
         ]);
     }
 
     /**
-     * Accent colour and logo of the line-up visuals. Admins only.
+     * Accent colour, title typeface and logo, in the app, on the public pages
+     * and on the line-up visuals. Admins only.
      */
     #[Route('/collectif/identite', name: 'app_collective_identite', methods: ['POST'])]
     #[IsCsrfTokenValid('identite')]
@@ -67,10 +69,13 @@ final class CollectiveController extends AbstractController
 
             return $this->redirectToRoute('app_collective', ['_fragment' => 'identite']);
         }
+        $collective->setStyleTitres(StyleTitres::tryFrom($request->request->getString('style_titres')) ?? $collective->getStyleTitres());
         $entityManager->flush();
 
         $logo = $request->files->get('logo');
-        if ($logo instanceof UploadedFile) {
+        if ($request->request->getBoolean('retirer_logo')) {
+            $identite->retirerLogo($collective);
+        } elseif ($logo instanceof UploadedFile) {
             try {
                 $identite->changerLogo($collective, $logo);
             } catch (FichierRefuse $e) {

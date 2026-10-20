@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Line-up · {{ soiree.nom }}{% endblock %}
+
+{% block body %}
+    {{ include('_partials/retour_soiree.html.twig', {id: soiree.id, nom: soiree.nom}) }}
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <p class="etiquette">Line-up · {{ soiree.date|date('d/m/Y') }}</p>
+            <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ soiree.nom }}</h1>
+        </div>
+        {% if peut_modifier %}
+            <twig:Button href="{{ path('app_line_up_ajouter', {id: soiree.id}) }}" id="ajouter-artiste">Ajouter un artiste</twig:Button>
+        {% endif %}
+    </div>
+
+    <twig:Card title="Timetable" class="mt-6" id="timetable">
+        <ul class="-my-2 divide-y divide-slate-800">
+            {% for passage in timetable %}
+                <li class="flex gap-4 py-2">
+                    <span class="w-28 shrink-0 font-mono text-slate-400 tabular-nums">{{ passage.debut|date('H:i') }} – {{ passage.fin|date('H:i') }}</span>
+                    <span>{{ passage.bookings|map(b => b.artiste.nom)|join(' b2b ') }}</span>
+                </li>
+            {% else %}
+                <li class="py-2 text-slate-500">Aucun passage calé pour l'instant.</li>
+            {% endfor %}
+        </ul>
+    </twig:Card>
+
+    {% set token = csrf_token('line-up') %}
+    {% set statuts = {contacte: 'neutral', negociation: 'warning', confirme: 'info', contrat_signe: 'info', declare_guso: 'info', paye: 'success'} %}
+    <section class="mt-8 flex flex-col gap-3" aria-labelledby="artistes-titre">
+        <h2 class="etiquette" id="artistes-titre">Artistes · {{ programmes|length }}</h2>
+        <ul class="flex flex-col gap-3" id="artistes">
+            {% for p in programmes %}
+                {% set booking = p.booking %}
+                {% set artiste = booking.artiste %}
+                <li class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900" id="booking-{{ booking.id }}">
+                    <div class="flex flex-col gap-3 p-4">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="text-lg font-semibold">{{ artiste.nom }}</h3>
+                                <p class="font-mono text-xs text-slate-400">
+                                    {{ booking.passage ? booking.passage.debut|date('H:i') ~ ' – ' ~ booking.passage.fin|date('H:i') ~ (booking.passage.estB2B ? ' · B2B' : '') : 'Horaire à caler' }}
+                                </p>
+                            </div>
+                            <twig:Badge status="{{ statuts[booking.statut] }}" :dot="false">{{ booking.statutEnum.label }}</twig:Badge>
+                        </div>
+
+                        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                            <dt class="text-slate-400">Cachet</dt>
+                            <dd class="tabular-nums">{{ booking.cachet|euros }} · {{ booking.modeRemuneration.label }}</dd>
+                            <dt class="text-slate-400">Technique</dt>
+                            <dd>Installation {{ booking.rider.installationMinutes }} min, balance {{ booking.rider.balanceMinutes }} min{{ booking.rider.materielDemande is not empty ? ' · fourni : ' ~ booking.rider.materielDemande|join(', ') }}</dd>
+                            <dt class="text-slate-400">Accueil</dt>
+                            <dd>{{ booking.hospitalite.repas }} repas · {{ booking.hospitalite.invitations }} invitation{{ booking.hospitalite.invitations > 1 ? 's' }}{{ booking.hospitalite.hebergement ? ' · hébergement' }}{{ booking.hospitalite.regimes is not empty ? ' · ' ~ booking.hospitalite.regimes|join(', ') }}</dd>
+                            {% if peut_modifier and (artiste.telephone or artiste.email) %}
+                                <dt class="text-slate-400">Contact</dt>
+                                <dd class="flex flex-wrap gap-x-3">
+                                    {% if artiste.telephone %}<a href="tel:{{ artiste.telephone }}" class="text-indigo-400 underline">{{ artiste.telephone }}</a>{% endif %}
+                                    {% if artiste.email %}<a href="mailto:{{ artiste.email }}" class="text-indigo-400 underline">{{ artiste.email }}</a>{% endif %}
+                                </dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+
+                    {% if peut_modifier %}
+                        <div class="flex flex-wrap items-center gap-2 border-t border-slate-800 px-4 py-3">
+                            {% for transition in p.transitions %}
+                                <form method="post" action="{{ path('app_line_up_statut', {id: booking.id, transition: transition}) }}">
+                                    <input type="hidden" name="_token" value="{{ token }}">
+                                    <twig:Button type="submit" size="sm">{{ transitions[transition] }}</twig:Button>
+                                </form>
+                            {% endfor %}
+                            <twig:Button href="{{ path('app_line_up_modifier', {id: booking.id}) }}" variant="secondary" size="sm">Modifier</twig:Button>
+                            <twig:Button href="{{ p.lien_feuille }}" variant="secondary" size="sm" target="_blank" rel="noopener" data-lien-feuille>Feuille artiste</twig:Button>
+                            {% if p.retirable %}
+                                <form method="post" action="{{ path('app_line_up_retirer', {id: booking.id}) }}" class="ml-auto">
+                                    <input type="hidden" name="_token" value="{{ token }}">
+                                    <twig:Button type="submit" variant="ghost" size="sm" aria-label="Retirer {{ artiste.nom }} du line-up">Retirer</twig:Button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </li>
+            {% else %}
+                <li><twig:EmptyState title="Aucun artiste pour l'instant" description="{{ peut_modifier ? 'Ajoutez les artistes au fil des contacts : leur statut suit la négociation jusqu\'au paiement.' : 'Le line-up apparaîtra ici.' }}" /></li>
+            {% endfor %}
+        </ul>
+        {% if peut_modifier and programmes is not empty %}
+            <p class="text-sm text-slate-400">La feuille artiste s'ouvre sans compte : envoyez son lien à l'artiste, il y trouve son passage, l'accès et sa guest-list. Il reste valable 30 jours.</p>
+        {% endif %}
+    </section>
+{% endblock %}

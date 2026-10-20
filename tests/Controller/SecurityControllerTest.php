@@ -42,7 +42,7 @@ final class SecurityControllerTest extends WebTestCase
         self::assertNull($this->rememberMeCookie($client));
 
         $client->submit($crawler->selectButton('Me connecter')->form());
-        self::assertResponseRedirects('/collectif');
+        self::assertResponseRedirects('/');
 
         $rememberMe = $this->rememberMeCookie($client);
         self::assertNotNull($rememberMe);
@@ -60,7 +60,7 @@ final class SecurityControllerTest extends WebTestCase
         $link = $this->extractLink($this->lastEmail());
 
         $client->submit($client->request('GET', $link)->selectButton('Me connecter')->form());
-        self::assertResponseRedirects('/collectif');
+        self::assertResponseRedirects('/');
 
         $client->getCookieJar()->clear();
         $client->submit($client->request('GET', $link)->selectButton('Me connecter')->form());

@@ -43,7 +43,7 @@ final class AccentEtFramesTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/connexion');
 
-        self::assertStringContainsString('--accent: #6366f1;', (string) $crawler->filter('html')->attr('style'));
+        self::assertStringContainsString('--accent: #6e8bff;', (string) $crawler->filter('html')->attr('style'));
     }
 
     public function testScreensAreSplitIntoFramesForLiveUpdates(): void

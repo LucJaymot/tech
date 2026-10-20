@@ -3,8 +3,9 @@
 {% block title %}Planning · {{ soiree.nom }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Planning bénévoles · {{ soiree.date|date('d/m/Y') }}</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+    {{ include('_partials/retour_soiree.html.twig', {id: soiree.id, nom: soiree.nom}) }}
+    <p class="etiquette">Planning bénévoles · {{ soiree.date|date('d/m/Y') }}</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ soiree.nom }}</h1>
 
     <turbo-frame id="planning-trous-{{ soiree.id }}" target="_top" class="block">
         <div class="mt-4" id="resume-trous">
@@ -31,7 +32,7 @@
                         {% set dispos = disponibles[creneau.id] ?? [] %}
                         <article id="creneau-{{ creneau.id }}" class="rounded-xl border {{ trou ? 'border-red-900' : 'border-slate-800' }} bg-slate-900 p-4">
                             <div class="flex flex-wrap items-center justify-between gap-2">
-                                <p class="font-medium tabular-nums">{{ creneau.debut|date('H:i') }} – {{ creneau.fin|date('H:i') }} <span class="text-sm font-normal text-slate-400">· {{ creneau.nombreRequis }} requis</span></p>
+                                <p class="font-medium font-mono tabular-nums">{{ creneau.debut|date('H:i') }} – {{ creneau.fin|date('H:i') }} <span class="text-sm font-normal text-slate-400">· {{ creneau.nombreRequis }} requis</span></p>
                                 {% if trou %}
                                     <twig:Led statut="bloquant" libelle="{{ trou.manquants }} manquant{{ trou.manquants > 1 ? 's' }}" />
                                 {% else %}

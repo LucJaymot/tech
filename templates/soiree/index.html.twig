@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Soirées{% endblock %}
+
+{% block body %}
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <p class="etiquette">Le collectif</p>
+            <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">Soirées</h1>
+        </div>
+        {% if can_edit %}
+            <twig:Button href="{{ path('app_soiree_nouvelle') }}" id="nouvelle-soiree">Nouvelle soirée</twig:Button>
+        {% endif %}
+    </div>
+
+    <section class="mt-8 flex flex-col gap-3" aria-labelledby="a-venir-titre">
+        <h2 class="etiquette" id="a-venir-titre">À venir</h2>
+        <ul class="flex flex-col gap-3" id="soirees">
+            {% for item in a_venir %}
+                {{ include('soiree/_carte.html.twig') }}
+            {% else %}
+                <li><twig:EmptyState title="Aucune soirée à venir" description="{{ can_edit ? 'Créez la prochaine : ses démarches seront préparées automatiquement.' : 'Les prochaines soirées du collectif apparaîtront ici.' }}" /></li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    {% if passees is not empty %}
+        <section class="mt-10 flex flex-col gap-3" aria-labelledby="passees-titre">
+            <div class="flex items-center justify-between gap-3">
+                <h2 class="etiquette" id="passees-titre">Passées</h2>
+                {% if can_view_budget %}
+                    <a href="{{ path('app_bilan_annuel', {annee: 'now'|date('Y')}) }}" class="etiquette underline decoration-slate-600 underline-offset-4 hover:text-slate-100">Bilan annuel</a>
+                {% endif %}
+            </div>
+            <ul class="flex flex-col gap-3" id="soirees-passees">
+                {% for item in passees %}
+                    {{ include('soiree/_carte.html.twig') }}
+                {% endfor %}
+            </ul>
+        </section>
+    {% elseif can_view_budget %}
+        <p class="mt-8"><a href="{{ path('app_bilan_annuel', {annee: 'now'|date('Y')}) }}" class="etiquette underline decoration-slate-600 underline-offset-4 hover:text-slate-100">Bilan annuel</a></p>
+    {% endif %}
+{% endblock %}

@@ -1,4 +1,10 @@
-<p>Bonjour,</p>
-<p>Pour <strong>{{ tache.soiree }}</strong> : {{ tache.libelle }}, {{ jours == 0 ? 'à faire aujourd\'hui' : 'à faire d\'ici le ' ~ tache.echeance|date('d/m/Y') }}.</p>
-<p><a href="{{ tache.url }}" style="display:inline-block;padding:12px 20px;background:#6366f1;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;">Voir le rétroplanning</a></p>
-<p style="color:#64748b;font-size:13px;">Règle indicative, <a href="{{ tache.source }}">source</a> vérifiée le {{ tache.verifiee_le|date('d/m/Y') }}. Confirmez auprès de l'administration concernée.</p>
+{% extends 'emails/_layout.html.twig' %}
+{% from 'emails/_layout.html.twig' import bouton %}
+
+{% block contenu %}
+    <p>Bonjour,</p>
+    <p>Pour <strong>{{ tache.soiree }}</strong> : {{ tache.libelle }}, {{ jours == 0 ? 'à faire aujourd\'hui' : 'à faire d\'ici le ' ~ tache.echeance|date('d/m/Y') }}.</p>
+    {{ bouton(tache.url, 'Voir le rétroplanning') }}
+{% endblock %}
+
+{% block note %}Règle indicative, <a href="{{ tache.source }}" style="color:#6e8bff;">source</a> vérifiée le {{ tache.verifiee_le|date('d/m/Y') }}. Confirmez auprès de l'administration concernée.{% endblock %}

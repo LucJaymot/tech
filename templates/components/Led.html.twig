@@ -1,22 +1,22 @@
 {#
-    Status light with its label, never colour alone.
+    LED d'état et son libellé, jamais la couleur seule.
     <twig:Led statut="bloquant" libelle="2 personnes manquantes" />
-    Statuts : ok, attention, bloquant.
+    Statuts : ok (fait, vert), attention (à venir, ambre), bloquant (rouge).
 #}
 {% props statut = 'ok', libelle %}
 {% set led = html_cva(
-    base: 'size-2.5 shrink-0 rounded-full ring-2',
+    base: 'h-1.5 w-6 shrink-0 rounded-[2px]',
     variants: {
         statut: {
-            ok: 'bg-emerald-400 ring-emerald-400/30',
-            attention: 'bg-amber-400 ring-amber-400/30',
-            bloquant: 'bg-red-500 ring-red-500/30 motion-safe:animate-pulse',
+            ok: 'bg-emerald-400 shadow-[0_0_10px_rgb(52_199_89/0.7)]',
+            attention: 'bg-amber-400 shadow-[0_0_10px_rgb(255_176_0/0.7)]',
+            bloquant: 'bg-red-500 shadow-[0_0_10px_rgb(255_59_48/0.8)] motion-safe:animate-pulse',
         },
     },
 ) %}
-<span {{ attributes.defaults({class: 'inline-flex items-center gap-2 text-sm'}) }} data-led="{{ statut }}">
+<span {{ attributes.defaults({class: 'inline-flex items-center gap-2.5 text-sm'}) }} data-led="{{ statut }}">
     <span class="{{ led.apply({statut: statut}) }}" aria-hidden="true"></span>
-    <span class="{{ statut == 'bloquant' ? 'font-semibold text-red-300' : (statut == 'attention' ? 'text-amber-200' : 'text-slate-300') }}">
+    <span class="{{ statut == 'bloquant' ? 'font-semibold text-red-300' : (statut == 'attention' ? 'text-amber-300' : 'text-slate-300') }}">
         <span class="sr-only">{{ {ok: 'OK', attention: 'Attention', bloquant: 'Bloquant'}[statut] }} : </span>{{ libelle }}
     </span>
 </span>

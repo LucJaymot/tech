@@ -3,8 +3,8 @@
 {% block title %}{{ feuille.artiste }} · {{ feuille.soiree }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Feuille artiste · {{ feuille.artiste }}</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ feuille.soiree }}</h1>
+    <p class="etiquette">Feuille artiste · {{ feuille.artiste }}</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ feuille.soiree }}</h1>
     <p class="mt-1 text-slate-300">
         {{ feuille.date|date('d/m/Y') }} · ouverture {{ feuille.ouverture|date('H:i') }}, fermeture {{ feuille.fermeture|date('H:i') }}
     </p>
@@ -36,7 +36,7 @@
                 <ul class="-my-2 divide-y divide-slate-800" id="timetable">
                     {% for passage in feuille.timetable %}
                         <li class="flex gap-4 py-2">
-                            <span class="w-28 shrink-0 tabular-nums text-slate-400">{{ passage.debut|date('H:i') }} – {{ passage.fin|date('H:i') }}</span>
+                            <span class="w-28 shrink-0 font-mono tabular-nums text-slate-400">{{ passage.debut|date('H:i') }} – {{ passage.fin|date('H:i') }}</span>
                             <span>{{ passage.artistes|join(' b2b ') }}</span>
                         </li>
                     {% endfor %}

@@ -6,8 +6,8 @@
     {% if collective is null %}
         <twig:EmptyState title="Aucun collectif" description="Vous n'êtes membre d'aucun collectif pour le moment." />
     {% else %}
-        <p class="text-sm text-slate-400">Collectif actif</p>
-        <h1 class="text-2xl font-bold sm:text-3xl">{{ collective.name }}</h1>
+        <p class="etiquette">Collectif actif</p>
+        <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ collective.name }}</h1>
 
         <div class="mt-8 flex flex-col gap-6">
             <twig:Card title="Membres" description="{{ memberships|length }} membre{{ memberships|length > 1 ? 's' }}">
@@ -31,73 +31,6 @@
                 </twig:block>
             </twig:Card>
 
-            {% if soirees is not empty or can_edit %}
-                <twig:Card title="Soirées">
-                    <ul class="-my-2 divide-y divide-slate-800" id="soirees">
-                        {% for soiree in soirees %}
-                            <li class="flex items-center justify-between gap-3 py-3">
-                                <div class="min-w-0">
-                                    <a href="{{ path('app_soiree', {id: soiree.id}) }}" class="block truncate font-medium underline decoration-slate-600 underline-offset-4 hover:decoration-current">{{ soiree.nom }}</a>
-                                    <p class="text-sm text-slate-400">{{ soiree.date|date('d/m/Y') }} · {{ soiree.statutEnum.label }}</p>
-                                </div>
-                                <div class="flex shrink-0 flex-wrap justify-end gap-2">
-                                    <twig:Button href="{{ path('app_planning', {id: soiree.id}) }}" variant="secondary" size="sm">Planning</twig:Button>
-                                    <twig:Button href="{{ path('app_retroplanning', {id: soiree.id}) }}" variant="secondary" size="sm">Démarches</twig:Button>
-                                    <twig:Button href="{{ path('app_feuille_de_route', {id: soiree.id}) }}" variant="secondary" size="sm">Feuille de route</twig:Button>
-                                    {% if can_edit %}
-                                        <twig:Button href="{{ path('app_guest_lists', {id: soiree.id}) }}" variant="secondary" size="sm">Invités</twig:Button>
-                                        <twig:Button href="{{ path('app_pointage', {id: soiree.id}) }}" variant="secondary" size="sm">Pointage</twig:Button>
-                                        <twig:Button href="{{ path('app_visuels', {id: soiree.id}) }}" variant="secondary" size="sm">Visuels</twig:Button>
-                                    {% endif %}
-                                    {% if can_view_budget %}
-                                        <twig:Button href="{{ path('app_budget', {id: soiree.id}) }}" variant="secondary" size="sm">Budget</twig:Button>
-                                        <twig:Button href="{{ path('app_bilan', {id: soiree.id}) }}" variant="secondary" size="sm">Bilan</twig:Button>
-                                    {% endif %}
-                                </div>
-                            </li>
-                        {% else %}
-                            <li class="py-3 text-slate-500">Aucune soirée pour l'instant.</li>
-                        {% endfor %}
-                    </ul>
-                    <twig:block name="footer">
-                        {% if can_edit %}
-                            <twig:Button href="{{ path('app_soiree_nouvelle') }}" size="sm" id="nouvelle-soiree">Nouvelle soirée</twig:Button>
-                        {% endif %}
-                        {% if can_view_budget and soirees is not empty %}
-                            <twig:Button href="{{ path('app_bilan_annuel', {annee: 'now'|date('Y')}) }}" variant="secondary" size="sm">Bilan annuel</twig:Button>
-                        {% endif %}
-                    </twig:block>
-                </twig:Card>
-            {% endif %}
-
-            <twig:Card title="Notifications" description="Rappels des démarches sur ce téléphone ou cet ordinateur, en plus des e-mails." id="notifications">
-                <div class="flex flex-wrap items-center justify-between gap-3"
-                     data-controller="notifications"
-                     data-notifications-cle-value="{{ cle_push }}"
-                     data-notifications-abonner-value="{{ path('app_push_abonner') }}"
-                     data-notifications-desabonner-value="{{ path('app_push_desabonner') }}"
-                     data-notifications-jeton-value="{{ csrf_token('push') }}">
-                    <p class="text-sm text-slate-300" data-notifications-target="etat" aria-live="polite">Vérification…</p>
-                    <twig:Button size="sm" variant="secondary" data-notifications-target="bouton" data-action="notifications#basculer" hidden>Activer</twig:Button>
-                </div>
-            </twig:Card>
-
-            {% if can_manage %}
-                <twig:Card title="Identité visuelle" description="Couleur d'accent et logo des visuels de line-up." id="identite">
-                    <form method="post" action="{{ path('app_collective_identite') }}" enctype="multipart/form-data" data-turbo="false" class="flex flex-col gap-4">
-                        <input type="hidden" name="_token" value="{{ csrf_token('identite') }}">
-                        <label class="flex items-center gap-3 text-sm">
-                            <input type="color" name="couleur" value="{{ collective.couleurAccent }}" class="h-10 w-14 rounded border border-slate-700 bg-slate-900">
-                            Couleur d'accent
-                        </label>
-                        <label class="flex flex-col gap-1 text-sm">
-                            Logo (PNG ou JPEG, 1 Mo au plus){{ collective.logo ? ' · un logo est déjà enregistré' }}
-                            <input type="file" name="logo" accept="image/png,image/jpeg" class="text-slate-300">
-                        </label>
-                        <div><twig:Button type="submit" size="sm">Enregistrer</twig:Button></div>
-                    </form>
-                </twig:Card>
-            {% endif %}
 
             {% if can_manage and invitations is not empty %}
                 <twig:Card title="Invitations en attente">
@@ -117,6 +50,54 @@
                     </ul>
                 </twig:Card>
             {% endif %}
+
+            <twig:Card title="Notifications" description="Rappels des démarches sur ce téléphone ou cet ordinateur, en plus des e-mails." id="notifications">
+                <div class="flex flex-wrap items-center justify-between gap-3"
+                     data-controller="notifications"
+                     data-notifications-cle-value="{{ cle_push }}"
+                     data-notifications-abonner-value="{{ path('app_push_abonner') }}"
+                     data-notifications-desabonner-value="{{ path('app_push_desabonner') }}"
+                     data-notifications-jeton-value="{{ csrf_token('push') }}">
+                    <p class="text-sm text-slate-300" data-notifications-target="etat" aria-live="polite">Vérification…</p>
+                    <twig:Button size="sm" variant="secondary" data-notifications-target="bouton" data-action="notifications#basculer" hidden>Activer</twig:Button>
+                </div>
+            </twig:Card>
+
+            {% if can_manage %}
+                <twig:Card title="Identité visuelle" description="Couleur, typo des titres et logo : dans l'app, sur les pages publiques et les visuels de line-up." id="identite">
+                    <form method="post" action="{{ path('app_collective_identite') }}" enctype="multipart/form-data" data-turbo="false" class="flex flex-col gap-4">
+                        <input type="hidden" name="_token" value="{{ csrf_token('identite') }}">
+                        <label class="flex items-center gap-3 text-sm">
+                            <input type="color" name="couleur" value="{{ collective.couleurAccent }}" list="accents-charte" class="h-11 w-14 rounded border border-slate-700 bg-slate-900">
+                            <datalist id="accents-charte"><option value="#6e8bff"></option><option value="#c77dff"></option><option value="#2ee6d6"></option><option value="#ff5fa2"></option></datalist>
+                            Couleur d'accent
+                        </label>
+                        <label class="flex flex-col gap-1 text-sm">
+                            Typo des titres
+                            <select name="style_titres" class="rounded border border-slate-700 bg-slate-900 px-3 py-2.5 text-slate-100">
+                                {% for style in styles_titres %}
+                                    <option value="{{ style.value }}" {{ style == collective.styleTitres ? 'selected' }} style="font-family: {{ style.police }}">{{ style.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <div class="flex items-center gap-4">
+                            {% set logo = logo_collectif() %}
+                            {% if logo %}<img src="{{ logo }}" alt="Logo actuel" width="64" height="64" class="size-16 shrink-0 rounded-md border border-slate-800 object-contain" id="logo-actuel">{% endif %}
+                            <div class="flex flex-col gap-2">
+                                <label class="flex flex-col gap-1 text-sm">
+                                    {{ logo ? 'Remplacer le logo' : 'Logo' }} (PNG ou JPEG, 1 Mo au plus)
+                                    <input type="file" name="logo" accept="image/png,image/jpeg" class="text-slate-300">
+                                </label>
+                                {% if logo %}
+                                    <label class="flex min-h-11 items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="retirer_logo" value="1" class="size-5"> Retirer le logo</label>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div><twig:Button type="submit" size="sm">Enregistrer</twig:Button></div>
+                    </form>
+                </twig:Card>
+            {% endif %}
+
         </div>
     {% endif %}
 

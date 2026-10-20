@@ -1,16 +1,21 @@
-<p>Bonjour,</p>
-<p>Les démarches de <strong>{{ collective }}</strong> à faire dans les 30 jours :</p>
-<ul>
-    {% for tache in taches %}
-        <li>{% if tache.echeance < aujourdhui %}<strong style="color:#dc2626;">En retard</strong> · {% endif %}{{ tache.echeance|date('d/m/Y') }} · {{ tache.soiree }} : <a href="{{ tache.url }}">{{ tache.libelle }}</a></li>
-    {% endfor %}
-</ul>
-{% if alertes is not empty %}
-    <p><strong>Seuils annuels</strong></p>
-    <ul>
-        {% for alerte in alertes %}
-            <li>{{ alerte.libelle }} : {{ alerte.nombre }} / {{ alerte.limite }} en {{ alerte.annee }}</li>
+{% extends 'emails/_layout.html.twig' %}
+
+{% block contenu %}
+    <p>Bonjour,</p>
+    <p>Les démarches de <strong>{{ collective }}</strong> à faire dans les 30 jours :</p>
+    <ul style="padding-left:20px;margin:0 0 16px;">
+        {% for tache in taches %}
+            <li style="margin-bottom:8px;">{% if tache.echeance < aujourdhui %}<strong style="color:#ff6a61;">En retard</strong> · {% endif %}<span style="font-family:'IBM Plex Mono',Menlo,Consolas,monospace;font-size:14px;color:#ffb000;">{{ tache.echeance|date('d/m/Y') }}</span> · {{ tache.soiree }} : <a href="{{ tache.url }}" style="color:#6e8bff;">{{ tache.libelle }}</a></li>
         {% endfor %}
     </ul>
-{% endif %}
-<p style="color:#64748b;font-size:13px;">Règles indicatives : chaque démarche indique sa source et sa date de vérification sur le rétroplanning. Confirmez auprès de l'administration concernée.</p>
+    {% if alertes is not empty %}
+        <p style="margin:24px 0 8px;font-family:'IBM Plex Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#8a8a8e;">Seuils annuels</p>
+        <ul style="padding-left:20px;margin:0 0 16px;">
+            {% for alerte in alertes %}
+                <li style="margin-bottom:8px;">{{ alerte.libelle }} : <span style="font-family:'IBM Plex Mono',Menlo,Consolas,monospace;font-size:14px;">{{ alerte.nombre }} / {{ alerte.limite }}</span> en {{ alerte.annee }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{% block note %}Règles indicatives : chaque démarche indique sa source et sa date de vérification sur le rétroplanning. Confirmez auprès de l'administration concernée.{% endblock %}

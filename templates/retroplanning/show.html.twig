@@ -3,8 +3,9 @@
 {% block title %}Rétroplanning · {{ soiree.nom }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Rétroplanning administratif · {{ soiree.date|date('d/m/Y') }}</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+    {{ include('_partials/retour_soiree.html.twig', {id: soiree.id, nom: soiree.nom}) }}
+    <p class="etiquette">Rétroplanning administratif · {{ soiree.date|date('d/m/Y') }}</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ soiree.nom }}</h1>
 
     <p class="mt-4 rounded-lg border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200" id="mention-indicative">
         Ces démarches sont indicatives : elles viennent de règles générales, vérifiées à la date indiquée sous chacune.

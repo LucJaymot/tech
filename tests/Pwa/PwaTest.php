@@ -32,5 +32,7 @@ final class PwaTest extends WebTestCase
         self::assertStringContainsString('/hors-ligne', $sw, 'precached offline page');
         self::assertStringContainsString("const FEUILLES_DE_ROUTE = 'feuilles-de-route';", $sw, 'custom part appended');
         self::assertStringContainsString("addEventListener('push'", $sw);
+        self::assertStringNotContainsString("cacheName: 'pages'", $sw, 'no cache of private pages');
+        self::assertStringContainsString("caches.delete('pages')", $sw, 'and the old one is removed');
     }
 }

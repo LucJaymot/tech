@@ -48,8 +48,8 @@ final class VisuelsLineUpTest extends KernelTestCase
             self::assertStringContainsString('>Lila Moon</text>', $svg);
             self::assertStringContainsString('>DJ Kumo b2b Nadia K</text>', $svg);
             self::assertMatchesRegularExpression('/>[A-Z][a-zé]+ \d{1,2} [a-zéû]+ \d{4} · 19h00 · Salle des Lilas<\/text>/u', $svg);
-            self::assertStringContainsString('fill="#6366f1"', $svg, 'default accent colour');
-            self::assertStringContainsString('>CAISSON</text>', $svg);
+            self::assertStringContainsString('fill="#6e8bff"', $svg, 'default accent colour');
+            self::assertStringContainsString('>caisson</text>', $svg, 'the Caisson stamp');
             self::assertStringContainsString('>Jardin partagé des Lilas</text>', $svg, 'name instead of the missing logo');
         }
     }

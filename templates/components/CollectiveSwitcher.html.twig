@@ -1,7 +1,10 @@
 <header {{ attributes.defaults({class: 'sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 pt-[env(safe-area-inset-top)] backdrop-blur'}) }}>
-    <div class="mx-auto flex min-h-14 max-w-2xl items-center gap-2 px-4 sm:px-6">
+    <div class="mx-auto flex min-h-14 max-w-2xl items-center gap-3 px-4 sm:px-6">
+        <a href="{{ path('app_home') }}" class="shrink-0" aria-label="Caisson, accueil"><twig:Logo taille="reduit" px="28" :nom="true" class="[&>span]:hidden sm:[&>span]:inline" /></a>
         {% set active = this.active %}
         {% set choices = active ? this.choices : [] %}
+        {% set logo = logo_collectif() %}
+        {% if logo %}<img src="{{ logo }}" alt="" width="32" height="32" class="size-8 shrink-0 rounded-[2px] object-contain">{% endif %}
         {% if active is null %}
             <p class="text-sm text-slate-400">Aucun collectif</p>
         {% elseif choices|length > 1 %}
@@ -10,7 +13,7 @@
                 <input type="hidden" name="_target_path" value="{{ app.request.pathInfo }}">
                 <label for="collective-switcher" class="sr-only">Collectif actif</label>
                 <select id="collective-switcher" name="collective" data-action="auto-submit#submit"
-                        class="min-w-0 flex-1 truncate rounded-lg border border-slate-700 bg-slate-900 py-2 pr-8 pl-3 text-base font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="min-w-0 flex-1 truncate rounded-[2px] border border-slate-700 bg-ruban py-2 pr-8 pl-3 font-mono text-xs font-semibold tracking-[0.12em] text-slate-100 uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     {% for choice in choices %}
                         <option value="{{ choice.id }}" {{ choice.id == active.id ? 'selected' }}>{{ choice.name }} · {{ choice.role.label }}</option>
                     {% endfor %}
@@ -19,7 +22,7 @@
                 <twig:Button type="submit" variant="secondary" size="sm" data-auto-submit-target="button">Changer</twig:Button>
             </form>
         {% else %}
-            <p class="min-w-0 flex-1 truncate font-semibold">{{ active.name }}</p>
+            <p class="flex min-w-0 flex-1 justify-end"><span class="truncate rounded-[2px] bg-(--accent) px-2.5 py-1 font-mono text-[0.6875rem] font-semibold tracking-[0.2em] text-(--accent-texte) uppercase">{{ active.name }}</span></p>
         {% endif %}
     </div>
 </header>

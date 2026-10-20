@@ -3,8 +3,9 @@
 {% block title %}Inviter un membre{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">{{ collective.name }}</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">Inviter un membre</h1>
+    {{ include('_partials/retour_soiree.html.twig', {href: path('app_collective'), nom: 'Collectif'}) }}
+    <p class="etiquette">{{ collective.name }}</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">Inviter un membre</h1>
     <p class="mt-2 text-slate-400">La personne reçoit un lien par e-mail pour rejoindre le collectif en un clic. Il est valable 7 jours.</p>
 
     <twig:Card class="mt-6">

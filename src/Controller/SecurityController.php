@@ -31,7 +31,7 @@ final class SecurityController extends AbstractController
         #[Target('login_link_email')] RateLimiterFactoryInterface $loginLinkEmailLimiter,
     ): Response {
         if ($this->getUser()) {
-            return $this->redirectToRoute('app_collective');
+            return $this->redirectToRoute('app_home');
         }
 
         $form = $this->createForm(LoginLinkRequestType::class);

@@ -5,11 +5,11 @@
         <twig:block name="footer"><twig:Button>Modifier</twig:Button></twig:block>
     </twig:Card>
 #}
-{% props title = null, description = null %}
+{% props title = null, description = null, niveau = 2 %}
 <section {{ attributes.defaults({class: 'overflow-hidden rounded-xl border border-slate-800 bg-slate-900'}) }}>
     {% if title or description %}
-        <header class="border-b border-slate-800 px-4 py-3 sm:px-5">
-            {% if title %}<h2 class="text-base font-semibold text-slate-100">{{ title }}</h2>{% endif %}
+        <header class="px-4 pt-4 sm:px-5">
+            {% if title %}<h{{ niveau }} class="etiquette">{{ title }}</h{{ niveau }}>{% endif %}
             {% if description %}<p class="mt-0.5 text-sm text-slate-400">{{ description }}</p>{% endif %}
         </header>
     {% endif %}

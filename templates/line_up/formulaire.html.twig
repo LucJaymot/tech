@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ booking ? booking.artiste.nom : 'Ajouter un artiste' }} · {{ soiree.nom }}{% endblock %}
+
+{% block body %}
+    {{ include('_partials/retour_soiree.html.twig', {id: soiree.id, nom: soiree.nom}) }}
+    <p class="etiquette">Line-up</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ booking ? booking.artiste.nom : 'Ajouter un artiste' }}</h1>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'mt-6 flex flex-col gap-4'}}) }}
+        {{ form_errors(form) }}
+        <twig:Card title="Artiste" id="bloc-artiste">
+            <div class="flex flex-col gap-5">
+                <twig:Field :field="form.artiste" />
+                {% if not booking %}
+                    <details class="rounded-lg border border-slate-800 p-4" {{ form.nouvelArtiste.vars.submitted and form.nouvelArtiste.nom.vars.value ? 'open' }}>
+                        <summary class="cursor-pointer text-sm font-medium">Nouvel artiste</summary>
+                        <p class="mt-2 text-sm text-slate-400">Laissez « Artiste » vide ci-dessus : il rejoindra le carnet du collectif.</p>
+                        <div class="mt-4 flex flex-col gap-5">
+                            <twig:Field :field="form.nouvelArtiste.nom" />
+                            <div class="grid gap-5 sm:grid-cols-2">
+                                <twig:Field :field="form.nouvelArtiste.email" placeholder="artiste@exemple.fr" />
+                                <twig:Field :field="form.nouvelArtiste.telephone" />
+                            </div>
+                            <twig:Field :field="form.nouvelArtiste.notes" />
+                        </div>
+                    </details>
+                {% else %}
+                    {% do form.nouvelArtiste.setRendered %}
+                {% endif %}
+            </div>
+        </twig:Card>
+
+        <twig:Card title="Contrat" id="bloc-contrat">
+            <div class="grid gap-5 sm:grid-cols-2">
+                <twig:Field :field="form.cachet" />
+                <twig:Field :field="form.modeRemuneration" />
+            </div>
+        </twig:Card>
+
+        <twig:Card title="Passage" id="bloc-passage">
+            <div class="grid gap-5 sm:grid-cols-2">
+                <twig:Field :field="form.debut" />
+                <twig:Field :field="form.fin" />
+            </div>
+        </twig:Card>
+
+        <twig:Card title="Fiche technique" id="bloc-rider">
+            <div class="flex flex-col gap-5">
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <twig:Field :field="form.rider.installationMinutes" />
+                    <twig:Field :field="form.rider.balanceMinutes" />
+                </div>
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <twig:Field :field="form.rider.materielDemande" />
+                    <twig:Field :field="form.rider.materielApporte" />
+                </div>
+                <twig:Field :field="form.rider.notes" />
+            </div>
+        </twig:Card>
+
+        <twig:Card title="Accueil" id="bloc-hospitalite">
+            <div class="flex flex-col gap-5">
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <twig:Field :field="form.hospitalite.repas" />
+                    <twig:Field :field="form.hospitalite.invitations" />
+                </div>
+                <twig:Field :field="form.hospitalite.regimes" />
+                <twig:Field :field="form.hospitalite.hebergement" />
+                <twig:Field :field="form.hospitalite.notes" />
+            </div>
+        </twig:Card>
+
+        <div class="flex flex-col gap-2 sm:flex-row-reverse">
+            <twig:Button type="submit" size="lg" class="sm:flex-1">{{ booking ? 'Enregistrer' : 'Ajouter au line-up' }}</twig:Button>
+            <twig:Button variant="ghost" size="lg" href="{{ path('app_line_up', {id: soiree.id}) }}">Annuler</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

@@ -6,16 +6,16 @@
 #}
 {% props variant = 'primary', size = 'md', href = null, type = 'button', block = false %}
 {% set button = html_cva(
-    base: 'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent-lisible) disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
+    base: 'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-[background-color,filter,translate] duration-150 active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent-lisible) disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
     variants: {
         variant: {
-            primary: 'bg-(--accent) text-(--accent-texte) hover:brightness-110',
-            secondary: 'border border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700',
+            primary: 'bg-(--accent) text-(--accent-texte) shadow-[inset_0_-3px_0_rgb(0_0_0/0.25)] hover:brightness-110',
+            secondary: 'border border-touche-bord bg-touche text-slate-100 shadow-[inset_0_-3px_0_#151517] hover:bg-slate-800',
             danger: 'bg-red-600 text-white hover:bg-red-500',
             ghost: 'text-slate-300 hover:bg-slate-800 hover:text-white',
         },
         size: {
-            sm: 'min-h-9 px-3 text-sm',
+            sm: 'min-h-11 px-3 text-sm pointer-fine:min-h-9',
             md: 'min-h-11 px-4 text-sm',
             lg: 'min-h-12 px-5 text-base',
         },

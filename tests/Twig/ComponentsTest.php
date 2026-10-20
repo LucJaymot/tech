@@ -37,7 +37,7 @@ final class ComponentsTest extends KernelTestCase
         $link = $this->renderTwigComponent('Button', ['href' => '/x', 'variant' => 'secondary', 'class' => 'mt-4'], 'Lien')->crawler()->filter('a');
 
         self::assertSame('/x', $link->attr('href'));
-        self::assertStringContainsString('bg-slate-800', self::classOf($link));
+        self::assertStringContainsString('bg-touche', self::classOf($link));
         self::assertStringContainsString('mt-4', self::classOf($link));
     }
 
@@ -45,7 +45,7 @@ final class ComponentsTest extends KernelTestCase
     {
         $badge = $this->renderTwigComponent('Badge', ['status' => 'success', 'class' => 'ml-2'], 'Validé')->crawler()->filter('span')->first();
 
-        self::assertStringContainsString('bg-emerald-950', self::classOf($badge));
+        self::assertStringContainsString('text-emerald-400', self::classOf($badge));
         self::assertStringContainsString('ml-2', self::classOf($badge));
     }
 

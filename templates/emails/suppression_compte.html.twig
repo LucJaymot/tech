@@ -1,5 +1,11 @@
-<p>Bonjour,</p>
-<p>Vous ne vous êtes pas connecté à Caisson depuis longtemps. Pour protéger vos données, votre compte sera supprimé le <strong>{{ suppression_le|date('d/m/Y', 'Europe/Paris') }}</strong>.</p>
-<p>Pour le garder, il suffit de vous connecter avant cette date :</p>
-<p><a href="{{ connexion_url }}" style="display:inline-block;padding:12px 20px;background:#6366f1;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;">Me connecter</a></p>
-<p style="color:#64748b;font-size:13px;">Les données des collectifs dont vous êtes membre ne sont pas supprimées avec votre compte.</p>
+{% extends 'emails/_layout.html.twig' %}
+{% from 'emails/_layout.html.twig' import bouton %}
+
+{% block contenu %}
+    <p>Bonjour,</p>
+    <p>Vous ne vous êtes pas connecté à Caisson depuis longtemps. Pour protéger vos données, votre compte sera supprimé le <strong style="color:#ffb000;">{{ suppression_le|date('d/m/Y', 'Europe/Paris') }}</strong>.</p>
+    <p>Pour le garder, il suffit de vous connecter avant cette date :</p>
+    {{ bouton(connexion_url, 'Me connecter') }}
+{% endblock %}
+
+{% block note %}Les données des collectifs dont vous êtes membre ne sont pas supprimées avec votre compte.{% endblock %}

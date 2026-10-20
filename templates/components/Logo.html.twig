@@ -1,0 +1,27 @@
+{#
+    Logo Caisson, piste B « la caisse » : le symbole se simplifie quand il rétrécit.
+    <twig:Logo taille="reduit" :nom="true" />
+    Tailles : complet (64 px et plus), reduit (24 à 64 px), micro (24 px et moins).
+#}
+{% props taille = 'reduit', px = null, nom = false %}
+{% set px = px ?? {complet: 96, reduit: 32, micro: 16}[taille] %}
+<span {{ attributes.defaults({class: 'inline-flex items-center gap-2.5'}) }}>
+    <svg aria-hidden="true" width="{{ px }}" height="{{ px }}" viewBox="0 0 120 120" class="shrink-0">
+        {% if taille == 'complet' %}
+            <rect x="6" y="6" width="108" height="108" rx="6" fill="#1C1C1E" stroke="#EDEBE6" stroke-width="5"/>
+            <path d="M6 28V12a6 6 0 0 1 6-6h16M92 6h16a6 6 0 0 1 6 6v16M6 92v16a6 6 0 0 0 6 6h16M114 92v16a6 6 0 0 1-6 6H92" fill="none" stroke="#8A8A8E" stroke-width="9"/>
+            <circle cx="60" cy="60" r="34" fill="none" stroke="#EDEBE6" stroke-width="7"/>
+            <circle cx="60" cy="60" r="20" fill="none" stroke="#EDEBE6" stroke-width="4"/>
+            <circle cx="60" cy="60" r="9" fill="#FFB000"/>
+        {% elseif taille == 'micro' %}
+            <rect x="6" y="6" width="108" height="108" rx="18" fill="#1C1C1E" stroke="#EDEBE6" stroke-width="12"/>
+            <circle cx="60" cy="60" r="28" fill="none" stroke="#EDEBE6" stroke-width="16"/>
+            <circle cx="60" cy="60" r="12" fill="#FFB000"/>
+        {% else %}
+            <rect x="5" y="5" width="110" height="110" rx="12" fill="#1C1C1E" stroke="#EDEBE6" stroke-width="10"/>
+            <circle cx="60" cy="60" r="32" fill="none" stroke="#EDEBE6" stroke-width="12"/>
+            <circle cx="60" cy="60" r="13" fill="#FFB000"/>
+        {% endif %}
+    </svg>
+    {% if nom %}<span class="font-sans font-bold leading-none tracking-[-0.045em] text-slate-100" style="font-size: {{ (px * 0.7)|round }}px">caisson</span>{% endif %}
+</span>

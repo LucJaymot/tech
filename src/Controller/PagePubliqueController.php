@@ -2,7 +2,11 @@
 
 namespace App\Controller;
 
+use App\Collective\ActiveCollective;
+use App\Entity\Collective;
+use App\Repository\CollectiveRepository;
 use App\Visuel\FormatVisuel;
+use App\Visuel\IdentiteVisuelle;
 use App\Visuel\PagesPubliques;
 use App\Visuel\VisuelsLineUp;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -45,6 +49,28 @@ final class PagePubliqueController extends AbstractController
         $response->headers->set('Content-Security-Policy', "default-src 'none'; img-src data:; style-src 'unsafe-inline'");
         $response->setPublic();
         $response->setMaxAge(300);
+
+        return $response;
+    }
+
+    /**
+     * The collective's logo, public as on its line-up visuals.
+     */
+    #[Route('/c/{slug}/logo/{fichier}', name: 'app_collectif_logo', requirements: ['slug' => '[a-z0-9-]+', 'fichier' => '[0-9a-f]{32}\.(png|jpg|jpeg)'], methods: ['GET'])]
+    public function logo(string $slug, string $fichier, CollectiveRepository $collectives, ActiveCollective $activeCollective, IdentiteVisuelle $identite): Response
+    {
+        $collective = $activeCollective->withoutFilter(static fn (): ?Collective => $collectives->findOneBy(['slug' => $slug])) ?? throw $this->createNotFoundException();
+        $logo = $identite->lire($collective, $fichier) ?? throw $this->createNotFoundException();
+
+        $response = new StreamedResponse(static function () use ($logo): void {
+            fpassthru($logo['flux']);
+            fclose($logo['flux']);
+        });
+        $response->headers->set('Content-Type', $logo['type']);
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->setPublic();
+        $response->setMaxAge(31536000);
+        $response->setImmutable();
 
         return $response;
     }

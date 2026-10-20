@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * The collective's logo, stored in the "visuels" storage. PNG or JPEG only:
@@ -25,6 +26,7 @@ final class IdentiteVisuelle
         private readonly FilesystemOperator $storage,
         private readonly Televersement $televersement,
         private readonly EntityManagerInterface $entityManager,
+        private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
@@ -43,6 +45,42 @@ final class IdentiteVisuelle
         if (null !== $ancien) {
             $this->storage->delete($ancien);
         }
+    }
+
+    public function retirerLogo(Collective $collective): void
+    {
+        $ancien = $collective->getLogo();
+        $collective->setLogo(null);
+        $this->entityManager->flush();
+        if (null !== $ancien) {
+            $this->storage->delete($ancien);
+        }
+    }
+
+    /**
+     * Public URL of the logo, or null without logo. Its file name changes with
+     * each upload, so the URL can be cached for good.
+     */
+    public function urlLogo(Collective $collective): ?string
+    {
+        $logo = $collective->getLogo();
+
+        return null === $logo ? null : $this->urlGenerator->generate('app_collectif_logo', ['slug' => $collective->getSlug(), 'fichier' => basename($logo)]);
+    }
+
+    /**
+     * The logo file when $fichier is its current name, else null.
+     *
+     * @return array{flux: resource, type: string}|null
+     */
+    public function lire(Collective $collective, string $fichier): ?array
+    {
+        $logo = $collective->getLogo();
+        if (null === $logo || basename($logo) !== $fichier || !$this->storage->fileExists($logo)) {
+            return null;
+        }
+
+        return ['flux' => $this->storage->readStream($logo), 'type' => $this->storage->mimeType($logo)];
     }
 
     /**

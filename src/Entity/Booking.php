@@ -36,8 +36,10 @@ class Booking implements CollectiveScopedInterface
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Soiree $soiree;
 
-    #[ORM\ManyToOne]
+    /** Persisted with the booking when created in the line-up form. */
+    #[ORM\ManyToOne(cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Assert\Valid]
     private Artiste $artiste;
 
     /** Copied from the soirée, for the collective filter. */

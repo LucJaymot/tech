@@ -26,7 +26,7 @@ final class ContrasteTest extends TestCase
      */
     public static function accents(): iterable
     {
-        yield 'default indigo' => ['#6366f1'];
+        yield 'default accent' => ['#6e8bff'];
         yield 'navy, unreadable on dark' => ['#000080'];
         yield 'black' => ['#000000'];
         yield 'already light' => ['#fde047'];

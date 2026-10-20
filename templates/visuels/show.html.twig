@@ -3,8 +3,9 @@
 {% block title %}Visuels · {{ soiree.nom }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Visuels et partage · {{ soiree.date|date('d/m/Y') }}</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+    {{ include('_partials/retour_soiree.html.twig', {id: soiree.id, nom: soiree.nom}) }}
+    <p class="etiquette">Visuels et partage · {{ soiree.date|date('d/m/Y') }}</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ soiree.nom }}</h1>
 
     <div class="mt-6 flex flex-col gap-4">
         <twig:Card title="Visuels du line-up" description="Aux couleurs et avec le logo du collectif. À regénérer après un changement de programmation.">

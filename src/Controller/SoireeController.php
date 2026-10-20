@@ -5,10 +5,12 @@ namespace App\Controller;
 use App\Collective\ActiveCollective;
 use App\Entity\Soiree;
 use App\Form\SoireeType;
+use App\Repository\SoireeRepository;
 use App\Security\Voter\CollectiveVoter;
 use App\Security\Voter\SoireeVoter;
 use App\Soiree\ResumeSoiree;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +24,34 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_USER')]
 final class SoireeController extends AbstractController
 {
+    /**
+     * The collective's soirées: upcoming ones first, soonest first, then past ones, latest first.
+     */
+    #[Route('/soirees', name: 'app_soirees', methods: ['GET'])]
+    public function index(ActiveCollective $activeCollective, SoireeRepository $soirees, ClockInterface $clock): Response
+    {
+        $collective = $activeCollective->get() ?? throw $this->createNotFoundException();
+        $aujourdhui = $clock->now()->format('Y-m-d');
+
+        $aVenir = $passees = [];
+        foreach ($soirees->findBy(['collective' => $collective], ['date' => 'ASC']) as $soiree) {
+            $passee = $soiree->getDate()->format('Y-m-d') < $aujourdhui;
+            $item = ['soiree' => $soiree, 'compte_a_rebours' => ResumeSoiree::compteAReboursLe($soiree->getDate(), $clock->now()), 'passee' => $passee];
+            if ($passee) {
+                array_unshift($passees, $item);
+            } else {
+                $aVenir[] = $item;
+            }
+        }
+
+        return $this->render('soiree/index.html.twig', [
+            'a_venir' => $aVenir,
+            'passees' => $passees,
+            'can_edit' => $this->isGranted(CollectiveVoter::EDIT, $collective),
+            'can_view_budget' => $this->isGranted(CollectiveVoter::VIEW_BUDGET, $collective),
+        ]);
+    }
+
     #[Route('/soirees/{id}', name: 'app_soiree', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function show(Soiree $soiree, ResumeSoiree $resume): Response
     {

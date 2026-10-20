@@ -225,10 +225,10 @@ final class BudgetTest extends WebTestCase
         unlink($script);
     }
 
-    public function testCollectivePageLinksToTheBudget(): void
+    public function testSoireesPageLinksToTheBudget(): void
     {
         $this->login('ines@example.com');
-        $this->client->request('GET', '/collectif');
+        $this->client->request('GET', '/soirees');
 
         self::assertSelectorExists(\sprintf('#soirees a[href="%s"]', $this->url()));
     }

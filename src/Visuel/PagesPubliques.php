@@ -20,6 +20,7 @@ final class PagesPubliques
         private readonly PassageRepository $passages,
         private readonly VisuelsLineUp $visuels,
         private readonly ActiveCollective $activeCollective,
+        private readonly IdentiteVisuelle $identite,
     ) {
     }
 
@@ -42,6 +43,8 @@ final class PagesPubliques
                 soiree: $soiree->getNom(),
                 collectif: $soiree->getCollective()->getName(),
                 accent: $soiree->getCollective()->getCouleurAccent(),
+                styleTitres: $soiree->getCollective()->getStyleTitres(),
+                logo: $this->identite->urlLogo($soiree->getCollective()),
                 date: $soiree->getDate(),
                 ouverture: $soiree->getOuverture(),
                 fermeture: $soiree->getFermeture(),

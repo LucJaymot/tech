@@ -1,0 +1,5 @@
+{# Back link, like a navigation bar's back button. Expects "nom" and either "id" (a soirée) or "href". #}
+<a href="{{ href ?? path('app_soiree', {id: id}) }}" class="-ml-1 mb-2 inline-flex min-h-11 items-center gap-1 pr-2 text-sm text-slate-300 transition-colors hover:text-slate-100" data-imprimer="non">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="m15 18-6-6 6-6"/></svg>
+    <span class="truncate">{{ nom }}</span>
+</a>

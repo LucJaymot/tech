@@ -1,13 +1,190 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Caisson{% endblock %}
+{% block title %}Caisson · la régie des soirées de collectifs{% endblock %}
+
+{% block meta %}
+    <meta name="description" content="Line-up, bénévoles, guest-lists, budget et démarches administratives : Caisson prépare avec votre collectif chaque soirée, avant, pendant et après.">
+{% endblock %}
+
+{% block largeur %}max-w-6xl{% endblock %}
 
 {% block body %}
-    <section class="flex flex-col items-center py-10 text-center" id="presentation">
-        <img src="{{ asset('images/icone.png') }}" alt="" width="96" height="96" class="size-24 rounded-2xl">
-        <h1 class="mt-6 font-doto text-5xl font-bold tracking-widest text-(--accent-lisible)">CAISSON</h1>
-        <p class="mt-4 max-w-md text-lg text-slate-300">Préparer et vivre les soirées de votre collectif : line-up, bénévoles, guest-lists, budget et démarches, au même endroit.</p>
-        <twig:Button href="{{ path('app_login') }}" size="lg" class="mt-8">Recevoir mon lien de connexion</twig:Button>
-        <p class="mt-3 text-sm text-slate-400">Pas de mot de passe : un lien arrive par e-mail.</p>
+    {#
+        The sequencer: the rétroplanning of an example soirée, 16 steps of 5 days
+        from J-60 to J+15, lit with the tool's real deadlines (config/packages/obligations.yaml).
+    #}
+    {% set pas = [] %}
+    {% for i in 0..15 %}
+        {% set jour = -60 + 5 * i %}
+        {% set evenement = {
+            '-30': {etat: 'fait', libelle: 'Déclarer la représentation'},
+            '-15': {etat: 'venir', libelle: 'Sacem · buvette en mairie'},
+            '0': {etat: 'soiree', libelle: 'La soirée'},
+            '15': {etat: 'venir', libelle: 'DUS Guso'},
+        }[jour ~ ''] ?? null %}
+        {% set pas = pas|merge([{
+            libelle: jour == 0 ? 'J0' : (jour < 0 ? 'J' ~ jour : 'J+' ~ jour),
+            evenement: evenement,
+            passe: jour < -20,
+            groupe: (i // 4) is even,
+        }]) %}
+    {% endfor %}
+    {% set leds = {
+        fait: 'bg-emerald-400 shadow-[0_0_12px_rgb(52_199_89/0.85)]',
+        venir: 'bg-amber-400 shadow-[0_0_12px_rgb(255_176_0/0.85)]',
+        soiree: 'bg-(--accent) shadow-[0_0_14px_var(--accent)]',
+    } %}
+
+    {# Hero: what Caisson is, one action, and the signature. #}
+    <section class="grid items-center gap-12 py-8 lg:grid-cols-[1.05fr_1fr] lg:py-16" id="presentation" aria-labelledby="titre-caisson">
+        <div>
+            <twig:Logo taille="reduit" px="40" :nom="true" class="gap-3" />
+            <h1 class="mt-10 text-5xl leading-[0.95] font-bold tracking-[-0.035em] text-balance sm:text-7xl" id="titre-caisson">La régie de vos soirées.</h1>
+            <p class="mt-6 max-w-xl text-lg leading-relaxed text-slate-300 sm:text-xl">
+                Line-up, bénévoles, guest-lists, budget et démarches administratives&#8239;: tout ce qu'un collectif prépare avant, pendant et après la soirée, au même endroit.
+            </p>
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <twig:Button href="{{ path('app_login') }}" size="lg">Recevoir mon lien de connexion</twig:Button>
+                <twig:Button href="#avant-pendant-apres" variant="ghost" size="lg">Comment ça marche</twig:Button>
+            </div>
+            <p class="etiquette mt-5">Sans mot de passe · sur invitation de votre collectif</p>
+        </div>
+
+        <figure class="rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-[0_24px_80px_-32px_rgb(0_0_0/0.9)] sm:p-7" aria-labelledby="sequenceur-legende">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="etiquette">Rétroplanning · exemple</p>
+                    <p class="mt-1 text-lg font-semibold">Warehouse #4</p>
+                    <p class="font-mono text-xs text-slate-400">Samedi · 23:00 → 06:00</p>
+                </div>
+                <div class="text-right">
+                    <p class="etiquette">Aujourd'hui</p>
+                    <p class="compteur text-5xl leading-none">J-20</p>
+                </div>
+            </div>
+
+            <ol class="mt-7 grid grid-cols-8 gap-1.5 sm:grid-cols-16" aria-label="Les 16 pas du rétroplanning, de J-60 à J+15">
+                {% for p in pas %}
+                    <li class="flex flex-col items-center gap-1.5">
+                        <span class="flex h-12 w-full justify-center rounded-[3px] border border-touche-bord pt-1.5 shadow-[inset_0_-3px_0_#151517] {{ p.groupe ? 'bg-touche' : 'bg-[#19191b]' }}">
+                            <span class="allumage h-1 w-3/5 rounded-[1px] {{ p.evenement ? leds[p.evenement.etat] : (p.passe ? 'bg-slate-600' : 'bg-[#2e2e32]') }}" style="animation-delay: {{ 200 + loop.index0 * 70 }}ms" aria-hidden="true"></span>
+                        </span>
+                        <span class="font-mono text-[0.6875rem] whitespace-nowrap text-slate-400 tabular-nums {{ loop.index0 is odd ? 'sm:sr-only' }}">{{ p.libelle }}</span>
+                        {% if p.evenement %}<span class="sr-only">{{ p.evenement.libelle }}</span>{% endif %}
+                    </li>
+                {% endfor %}
+            </ol>
+
+            <figcaption class="mt-6 flex flex-col gap-2 border-t border-slate-800 pt-5 text-sm" id="sequenceur-legende">
+                <span class="flex items-center gap-3"><span class="h-1.5 w-6 rounded-[2px] bg-emerald-400" aria-hidden="true"></span>J-30 · Déclarer la représentation <span class="ml-auto font-mono text-xs text-emerald-400">FAIT</span></span>
+                <span class="flex items-center gap-3"><span class="h-1.5 w-6 rounded-[2px] bg-amber-400" aria-hidden="true"></span>J-15 · Sacem, buvette en mairie <span class="ml-auto font-mono text-xs text-amber-300">À VENIR</span></span>
+                <span class="flex items-center gap-3"><span class="h-1.5 w-6 rounded-[2px] bg-(--accent)" aria-hidden="true"></span>J0 · La soirée <span class="ml-auto font-mono text-xs text-slate-300">SAMEDI</span></span>
+                <span class="flex items-center gap-3"><span class="h-1.5 w-6 rounded-[2px] bg-amber-400" aria-hidden="true"></span>J+15 · DUS Guso <span class="ml-auto font-mono text-xs text-amber-300">À VENIR</span></span>
+            </figcaption>
+        </figure>
     </section>
+
+    {# The soirée's three times: a real sequence, hence the numbers. #}
+    <section class="border-t border-slate-800 py-16 sm:py-24" id="avant-pendant-apres" aria-labelledby="titre-temps">
+        <p class="etiquette">De la date calée au bilan</p>
+        <h2 class="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.025em] text-balance sm:text-5xl" id="titre-temps">Une soirée en trois temps, un seul outil.</h2>
+        <div class="mt-12 grid gap-4 md:grid-cols-3">
+            {% for temps in [
+                {n: '01', titre: 'Avant', texte: 'Le rétroplanning se construit tout seul à partir de la date, du lieu, de la jauge et de la buvette.', points: ['Démarches et échéances', 'Planning des bénévoles', 'Line-up et visuels à partager']},
+                {n: '02', titre: 'Pendant', texte: 'La feuille de route tient dans la poche, même sans réseau au fond de la salle.', points: ['Feuille de route hors ligne', 'Pointage des guest-lists à l\'entrée', 'Checks de la nuit']},
+                {n: '03', titre: 'Après', texte: 'Le réel face au prévu, et ce que chacun retient de la soirée.', points: ['Bilan financier recalculé', 'Débriefing de l\'équipe', 'Déclaration Guso à boucler']},
+            ] %}
+                <article class="flex flex-col rounded-xl border border-slate-800 bg-slate-900 p-6">
+                    <p class="font-mono text-sm text-slate-400">{{ temps.n }} — <span class="text-slate-100">{{ temps.titre|upper }}</span></p>
+                    <p class="mt-4 text-lg leading-snug text-slate-200">{{ temps.texte }}</p>
+                    <ul class="mt-6 flex flex-col gap-2.5 border-t border-slate-800 pt-5 font-mono text-sm text-slate-300">
+                        {% for point in temps.points %}
+                            <li class="flex items-center gap-3"><span class="h-1 w-3 rounded-[1px] bg-slate-500" aria-hidden="true"></span>{{ point }}</li>
+                        {% endfor %}
+                    </ul>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# The administrative side, as the check rows of the app. #}
+    <section class="grid gap-10 border-t border-slate-800 py-16 sm:py-24 lg:grid-cols-2 lg:items-center" aria-labelledby="titre-demarches">
+        <div>
+            <p class="etiquette">Administratif</p>
+            <h2 class="mt-3 text-3xl font-bold tracking-[-0.025em] text-balance sm:text-5xl" id="titre-demarches">Les démarches arrivent toutes seules.</h2>
+            <p class="mt-5 max-w-lg text-lg leading-relaxed text-slate-300">
+                Sacem, buvette temporaire, déclaration en préfecture, Guso&#8239;: chaque soirée reçoit ses échéances, avec un rappel par e-mail ou sur le téléphone. Les règles sont indicatives et citent leur source officielle.
+            </p>
+        </div>
+        <ul class="flex flex-col gap-2" aria-label="Exemple de démarches">
+            <li class="flex min-h-14 items-center gap-4 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                <span class="h-6 w-2 shrink-0 rounded-[2px] bg-red-500 shadow-[0_0_10px_rgb(255_59_48/0.8)]" aria-hidden="true"></span>
+                <span class="flex-1">Déclarer la représentation</span>
+                <span class="font-mono text-xs tracking-[0.12em] text-red-300">EN RETARD</span>
+            </li>
+            <li class="flex min-h-14 items-center gap-4 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                <span class="h-6 w-2 shrink-0 rounded-[2px] bg-amber-400 shadow-[0_0_10px_rgb(255_176_0/0.8)]" aria-hidden="true"></span>
+                <span class="flex-1">Autorisation de buvette en mairie</span>
+                <span class="font-mono text-xs tracking-[0.12em] text-amber-300">J-15</span>
+            </li>
+            <li class="flex min-h-14 items-center gap-4 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                <span class="h-6 w-2 shrink-0 rounded-[2px] bg-emerald-400 shadow-[0_0_10px_rgb(52_199_89/0.8)]" aria-hidden="true"></span>
+                <span class="flex-1 text-slate-400 line-through">Déclarer la soirée à la Sacem</span>
+                <span class="font-mono text-xs tracking-[0.12em] text-emerald-400">FAIT</span>
+            </li>
+        </ul>
+    </section>
+
+    {# Made for the night: the LED keys of the charter. #}
+    <section class="border-t border-slate-800 py-16 sm:py-24" aria-labelledby="titre-nuit">
+        <p class="etiquette">Le soir J</p>
+        <h2 class="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.025em] text-balance sm:text-5xl" id="titre-nuit">Pensé pour la nuit, pas pour un bureau.</h2>
+        <ul class="mt-12 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {% for touche in [
+                {nom: 'Hors ligne', texte: 'La feuille de route reste lisible sans réseau.', led: 'bg-emerald-400 shadow-[0_0_10px_rgb(52_199_89/0.8)]'},
+                {nom: 'Mobile', texte: 'Tout se fait au téléphone, d\'une main.', led: 'bg-emerald-400 shadow-[0_0_10px_rgb(52_199_89/0.8)]'},
+                {nom: 'Partage', texte: 'Visuels du line-up et lien WhatsApp prêts à envoyer.', led: 'bg-(--accent) shadow-[0_0_10px_var(--accent)]'},
+                {nom: 'Impression', texte: 'La feuille de route sort en noir sur blanc.', led: 'bg-amber-400 shadow-[0_0_10px_rgb(255_176_0/0.8)]'},
+            ] %}
+                <li class="flex flex-col gap-4 rounded-lg border border-touche-bord bg-touche p-5 shadow-[inset_0_-3px_0_#151517]">
+                    <span class="h-1.5 w-7 rounded-[2px] {{ touche.led }}" aria-hidden="true"></span>
+                    <span class="font-mono text-xs tracking-[0.14em] text-slate-100 uppercase">{{ touche.nom }}</span>
+                    <span class="text-sm leading-relaxed text-slate-300">{{ touche.texte }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    {# Responsibility: what happens to the collective's data. #}
+    <section class="grid gap-10 border-t border-slate-800 py-16 sm:py-24 lg:grid-cols-[1fr_1.4fr]" aria-labelledby="titre-donnees">
+        <div>
+            <p class="etiquette">Confidentialité</p>
+            <h2 class="mt-3 text-3xl font-bold tracking-[-0.025em] text-balance sm:text-4xl" id="titre-donnees">Les données restent au collectif.</h2>
+        </div>
+        <dl class="grid gap-6 sm:grid-cols-3">
+            <div>
+                <dt class="font-semibold">Cloisonné</dt>
+                <dd class="mt-2 text-sm leading-relaxed text-slate-300">Chaque collectif ne voit que ses soirées, ses budgets et ses contacts.</dd>
+            </div>
+            <div>
+                <dt class="font-semibold">Public, mais choisi</dt>
+                <dd class="mt-2 text-sm leading-relaxed text-slate-300">La page publique d'une soirée ne montre que le nom, la date, le lieu et le line-up.</dd>
+            </div>
+            <div>
+                <dt class="font-semibold">Exportable, supprimable</dt>
+                <dd class="mt-2 text-sm leading-relaxed text-slate-300">Un collectif peut récupérer ou effacer toutes ses données.</dd>
+            </div>
+        </dl>
+    </section>
+
+    {# The one action, again. #}
+    <section class="my-8 rounded-xl border border-slate-800 bg-slate-900 px-6 py-12 text-center sm:px-12 sm:py-16" aria-labelledby="titre-acces">
+        <h2 class="text-3xl font-bold tracking-[-0.025em] text-balance sm:text-4xl" id="titre-acces">Votre collectif est déjà sur Caisson&#8239;?</h2>
+        <p class="mx-auto mt-4 max-w-lg text-lg text-slate-300">Connectez-vous avec l'adresse à laquelle vous avez reçu l'invitation. Pas encore invité&#8239;? Demandez-le à un administrateur de votre collectif.</p>
+        <twig:Button href="{{ path('app_login') }}" size="lg" class="mt-8">Recevoir mon lien de connexion</twig:Button>
+    </section>
+
+    <footer class="py-10 text-center">
+        <p class="etiquette">Caisson · collectifs · soirées · régie</p>
+    </footer>
 {% endblock %}

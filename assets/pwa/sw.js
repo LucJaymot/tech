@@ -40,6 +40,11 @@ async function marquerHorsLigne(copie) {
     return new Response(html, { status: copie.status, headers: copie.headers });
 }
 
+// Pages were cached by an earlier version of this worker: never serve them again.
+self.addEventListener('activate', (event) => {
+    event.waitUntil(caches.delete('pages'));
+});
+
 // Contact details must not outlive the session on a shared phone.
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);

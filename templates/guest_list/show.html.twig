@@ -3,8 +3,9 @@
 {% block title %}Guest lists · {{ soiree.nom }}{% endblock %}
 
 {% block body %}
-    <p class="text-sm text-slate-400">Guest lists · {{ soiree.date|date('d/m/Y') }}</p>
-    <h1 class="text-2xl font-bold sm:text-3xl">{{ soiree.nom }}</h1>
+    {{ include('_partials/retour_soiree.html.twig', {id: soiree.id, nom: soiree.nom}) }}
+    <p class="etiquette">Guest lists · {{ soiree.date|date('d/m/Y') }}</p>
+    <h1 class="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{{ soiree.nom }}</h1>
 
     <div class="mt-6 flex flex-col gap-6">
         <turbo-frame id="guest-list-ma-liste-{{ soiree.id }}" target="_top" class="block">
